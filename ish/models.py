@@ -1,0 +1,70 @@
+from django.db import models
+from django.forms import ValidationError
+from django.utils import timezone
+
+# Create your models here.
+class Xodim(models.Model):
+    ism = models.CharField(max_length=100)
+    familiya = models.CharField(max_length=100)
+    ishlayapti = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return f"{self.ism} {self.familiya}"
+
+class Topshiriq(models.Model):
+    nomi = models.CharField(max_length=200)
+    tavsif = models.TextField()
+    bajarilgan = models.BooleanField(default=False)
+    tugash_sanasi = models.DateField(null=True, blank=True)
+    yaratilgan_vaqti = models.DateTimeField(auto_now_add=True)
+    yangilangan_vaqti = models.DateTimeField(auto_now=True)
+    file = models.FileField(upload_to='topshiriqlar/', null=True, blank=True)
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='topshiriqlar', null=True, blank=True)
+    masullar = models.ManyToManyField(Xodim, related_name='topshiriqlar', blank=True)
+    class Meta:
+        verbose_name = 'Topshiriq'
+        verbose_name_plural = 'Topshiriqlar'
+        ordering = ['-yaratilgan_vaqti']
+
+    def clean(self):
+        super().clean()
+        if self.tugash_sanasi and self.tugash_sanasi < timezone.localdate():
+            raise ValidationError({'tugash_sanasi': "Tugatish sanasi bugungi kundan oldin bo'lishi mumkin emas."})
+
+
+    def __str__(self):
+        return self.nomi
+
+class Excelupload(models.Model):
+    okpo = models.CharField(max_length=8)
+    inn = models.CharField(max_length=9)
+    soato = models.CharField(max_length=20)
+    nomi = models.CharField(max_length=400)
+    sababi = models.CharField(max_length=200)
+    opf = models.CharField(max_length=10)
+    hisobot_nomi = models.CharField(max_length=200, blank=True, null=True)
+    hisobot_davri = models.CharField(max_length=50, blank=True, null=True)
+    faoliyatsiz = models.BooleanField(default=False)
+    xat_turi = models.CharField(max_length=50, blank=True, null=True)
+    xat_sanasi = models.DateField(null=True, blank=True)
+    kiritgan = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='excel_uploads', null=True, blank=True)
+    aniqlangan_sanasi = models.DateField(auto_now_add=True)
+
+
+
+
+    def __str__(self):
+        return f"Excel fayli: {self.file.name} (Yuklangan: {self.uploaded_at})"
+    
+
+class Hisobot(models.Model):
+    nomi = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.nomi
+class Hisobotdavri(models.Model):
+    name = models.CharField(max_length=100)
+    tugash_sanasi = models.DateField(null=True, blank=True)
+    nomi = models.ForeignKey(Hisobot, on_delete=models.CASCADE, related_name='hisobot_davri')
+    def __str__(self):
+        return f"{self.name} ({self.tugash_sanasi})"
