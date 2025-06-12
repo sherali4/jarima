@@ -2,7 +2,7 @@ from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.utils import timezone
 import pandas as pd
-
+from django.views.generic.edit import UpdateView
 from ish.models import Topshiriq, Xodim, Excelupload, Hisobot, Hisobotdavri
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.forms import UserCreationForm
@@ -192,7 +192,7 @@ def item_detail(request, id):
 
 
 
-from django.views.generic.edit import UpdateView
+
 
 class KorxonaUpdateView(UpdateView):
     model = Excelupload

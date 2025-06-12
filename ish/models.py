@@ -1,9 +1,10 @@
 from django.db import models
 from django.forms import ValidationError
 from django.utils import timezone
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AbstractUser
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+
 
 # Create your models here.
 class Xodim(models.Model):
@@ -55,6 +56,8 @@ class Excelupload(models.Model):
     pdf_fayli = models.FileField(upload_to='jarima_xatlari')
 
 
+    def __str__(self):
+        return super().__str__()
 
 
     # def __str__(self):
@@ -73,10 +76,6 @@ class Hisobotdavri(models.Model):
     def __str__(self):
         return f"{self.name} ({self.tugash_sanasi})"
 
-
-
-
-from django.contrib.auth.models import AbstractUser
 
 class CustomUser(AbstractUser):
     telefon = models.CharField(max_length=20, blank=True, null=True)
