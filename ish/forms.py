@@ -37,7 +37,7 @@ from .models import CustomUser
 class CustomUserForm(UserCreationForm):
     class Meta:
         model = CustomUser
-        fields = ['username', 'telefon', 'yosh', 'manzil', 'password1', 'password2']
+        fields = ['username', 'telefon', 'soato', 'password1', 'password2']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -79,6 +79,7 @@ class ExceluploadForm(forms.Form):
     hisobot = forms.ModelChoiceField(
         queryset=Hisobot.objects.all(),
         label='Hisobot turini tanlash',
+        
         empty_label='Hisobot turini tanlang',
         help_text='Yuklangan faylga mos hisobotni tanlang.',
         required=False
@@ -119,4 +120,3 @@ class ExceluploadUpdateForm(forms.ModelForm):
         def __init__(self, *args, **kwargs):
                 super(ExceluploadForm, self).__init__(*args, **kwargs)
                 self.fields['nomi'].widget.attrs['readonly'] = True
-        

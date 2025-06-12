@@ -68,7 +68,7 @@ pip-delete-this-directory.txt
 *.spec
 
 # sqlite bazalari
-*.sqlite3
+
 *.db
 
 # local dump/data files

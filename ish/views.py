@@ -9,6 +9,10 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login, logout
 from .forms import ExceluploadForm, ExceluploadUpdateForm, TopshiriqForm, ExceluploadForm
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+
+
+
 
 def index(request):
     topshiriqlar = Topshiriq.objects.all()
@@ -91,6 +95,7 @@ def jarima(request):
     # Jarima sahifasini ko'rsatish
     return render(request, 'ish/jarima.html')
 
+@login_required
 def upload_excel(request):
     if request.method == 'POST':
         form = ExceluploadForm(request.POST, request.FILES)
@@ -119,7 +124,15 @@ def upload_excel(request):
 
                 # BAZADAN TEKSHIRUV: ushbu okpo va inn mavjudmi?
                 #mavjud = Excelupload.objects.filter(okpo=okpo_val, inn=inn_val).exists()
-                mavjud = Excelupload.objects.filter(okpo=okpo_val, inn=inn_val, xat_turi = "ko'rsatma", faoliyatsiz =False).exists()
+                
+                mavjud = Excelupload.objects.filter(okpo=okpo_val, inn=inn_val, hisobot_nomi=hisobot, xat_turi = "ko'rsatma", faoliyatsiz =False).exists()
+                sudga_xat = Excelupload.objects.filter(okpo=okpo_val, inn=inn_val, hisobot_nomi=hisobot, xat_turi = "chaqiriq", faoliyatsiz =False).exists()
+                if mavjud and not sudga_xat:
+                    xat_turi = 'chaqiriq'
+                elif sudga_xat:
+                    xat_turi = 'sudga xat'
+                else:
+                    xat_turi = 'ko\'rsatma'
 
 
                 Excelupload.objects.create(
@@ -131,7 +144,7 @@ def upload_excel(request):
                     nomi=row.get('nomi', ''),
                     sababi=row.get('sababi', ''),
                     opf=row.get('opf', ''),
-                    xat_turi="jarima" if mavjud else "ko'rsatma",                                        
+                    xat_turi=xat_turi,                                        
                 )
                 
 
@@ -156,7 +169,7 @@ def excelupload_listp(request):
     return render(request, 'ish/excelupload_list.html', {'uploads': uploads})
 
 def excelupload_list(request):
-    tabl = Excelupload.objects.all()
+    tabl = Excelupload.objects.filter(tasdiqlangan=False, faoliyatsiz=False).filter(xat_sanasi__isnull=True).filter(pdf_fayli='').exclude(xat_turi="sudga xat").order_by('-aniqlangan_sanasi')  # tasdiqlanmagan va faoliyatsiz bo'lmaganlar
     if request.method == 'POST':
         record_id = request.POST.get('record_id')
         pdf_file = request.FILES
@@ -171,7 +184,8 @@ def excelupload_list(request):
     else:
         form = None
 
-    records = Excelupload.objects.all()
+    records = Excelupload.objects.all().order_by('-aniqlangan_sanasi')  # so‘nggi yuklanganlar birinchi
+
     record_forms = []
     for rec in records:
         record_forms.append({
@@ -195,7 +209,7 @@ def item_detail(request, id):
 
 
 class KorxonaUpdateView(UpdateView):
-    model = Excelupload
+    model = Excelupload    
     fields = ['xat_sanasi', 'pdf_fayli']  # Қайси майдонлар таҳрирланади
     template_name = 'ish/item_detail.html'  # Формани кўрсатувчи шаблон
     success_url = reverse_lazy('index')  # Янгиланганидан кейин қайта йўналиш
