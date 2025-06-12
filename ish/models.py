@@ -1,6 +1,9 @@
 from django.db import models
 from django.forms import ValidationError
 from django.utils import timezone
+from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 # Create your models here.
 class Xodim(models.Model):
@@ -19,7 +22,7 @@ class Topshiriq(models.Model):
     yaratilgan_vaqti = models.DateTimeField(auto_now_add=True)
     yangilangan_vaqti = models.DateTimeField(auto_now=True)
     file = models.FileField(upload_to='topshiriqlar/', null=True, blank=True)
-    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='topshiriqlar', null=True, blank=True)
+    user = models.ForeignKey('ish.CustomUser', on_delete=models.CASCADE, related_name='topshiriqlar', null=True, blank=True)
     masullar = models.ManyToManyField(Xodim, related_name='topshiriqlar', blank=True)
     class Meta:
         verbose_name = 'Topshiriq'
@@ -47,7 +50,7 @@ class Excelupload(models.Model):
     faoliyatsiz = models.BooleanField(default=False)
     xat_turi = models.CharField(max_length=50, blank=True, null=True)
     xat_sanasi = models.DateField(null=True, blank=True)
-    kiritgan = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='excel_uploads', null=True, blank=True)
+    kiritgan = models.ForeignKey('ish.CustomUser', on_delete=models.CASCADE, related_name='excel_uploads', null=True, blank=True)
     aniqlangan_sanasi = models.DateField(auto_now_add=True)
     pdf_fayli = models.FileField(upload_to='jarima_xatlari')
 
@@ -69,3 +72,16 @@ class Hisobotdavri(models.Model):
     nomi = models.ForeignKey(Hisobot, on_delete=models.CASCADE, related_name='hisobot_davri')
     def __str__(self):
         return f"{self.name} ({self.tugash_sanasi})"
+
+
+
+
+from django.contrib.auth.models import AbstractUser
+
+class CustomUser(AbstractUser):
+    telefon = models.CharField(max_length=20, blank=True, null=True)
+    yosh = models.PositiveIntegerField(blank=True, null=True)
+    manzil = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return self.username

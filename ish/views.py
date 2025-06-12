@@ -1,4 +1,5 @@
 from django.http import JsonResponse
+from django.urls import reverse_lazy
 from django.utils import timezone
 import pandas as pd
 
@@ -34,7 +35,7 @@ def index(request):
 
 from .forms import FoydalanuvchiRoyxatForm
 
-def signup_view(request):
+def signup_view1(request):
     if request.method == 'POST':
         form = FoydalanuvchiRoyxatForm(request.POST)
         if form.is_valid():
@@ -44,12 +45,33 @@ def signup_view(request):
         form = FoydalanuvchiRoyxatForm()
     return render(request, 'auth/signup.html', {'form': form})
 
+from django.contrib.auth import authenticate, login
+from django.shortcuts import render, redirect
+from .forms import CustomUserForm
 
+def signup_view(request):
+    if request.method == 'POST':
+        form = CustomUserForm(request.POST)
+        if form.is_valid():
+            form.save()
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password1')
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)
+                return redirect('index')  # manzilga moslang
+    else:
+        form = CustomUserForm()
+    return render(request, 'auth/signup.html', {'form': form})
 
 
 def logout_view(request):
     logout(request)
     return redirect('login')
+
+
+
+
 
 def topshiriq_create_view(request):
     xodimlar = Xodim.objects.all()
@@ -161,4 +183,20 @@ def excelupload_list(request):
     return render(request, 'ish/excelupload_list.html', {'record_forms': record_forms, 'ruyxat': tabl})
 
 def item_detail(request, id):
-    return render(request, 'ish/item_detail.html', {'nomer':id})
+    korxona = get_object_or_404(Excelupload, id=id)
+    context = {
+        'korxona': korxona,
+        'nomer': id,
+    }
+    return render(request, 'ish/item_detail.html', context=context)
+
+
+
+from django.views.generic.edit import UpdateView
+
+class KorxonaUpdateView(UpdateView):
+    model = Excelupload
+    fields = ['xat_sanasi', 'pdf_fayli']  # Қайси майдонлар таҳрирланади
+    template_name = 'ish/item_detail.html'  # Формани кўрсатувчи шаблон
+    success_url = reverse_lazy('index')  # Янгиланганидан кейин қайта йўналиш
+

@@ -2,6 +2,10 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import Hisobot, Topshiriq, Excelupload, Hisobotdavri
+
+
+
+
 class FoydalanuvchiRoyxatForm(UserCreationForm):
     class Meta:
         model = User
@@ -12,13 +16,34 @@ class FoydalanuvchiRoyxatForm(UserCreationForm):
             'password2': 'Parolni tasdiqlang',
         }
 
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control'
+
         self.fields['username'].help_text = "Faqat harflar, raqamlar va @/./+/-/_ belgilariga ruxsat etiladi."
         self.fields['password1'].help_text = (
             "Parol kamida 8 belgidan iborat bo‘lishi, oddiy so‘z bo‘lmasligi va raqamlardan iborat emasligi lozim."
         )
         self.fields['password2'].help_text = "Tekshirish uchun parolni qayta kiriting."
+
+
+
+
+from django.contrib.auth.forms import UserCreationForm
+from .models import CustomUser
+
+class CustomUserForm(UserCreationForm):
+    class Meta:
+        model = CustomUser
+        fields = ['username', 'telefon', 'yosh', 'manzil', 'password1', 'password2']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control'
+
 
 
 class TopshiriqForm(forms.ModelForm):

@@ -4,8 +4,19 @@
 {% block content %}
 <div class="container mt-5">
     <h1>{{ nomer}}</h1>
+<h2>Маҳсулотни таҳрирлаш</h2>
 
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
 
+    {{ form.non_field_errors }}
+
+    <div>
+        {{ form.as_p }}
+    </div>
+
+    <button type="submit">💾 Сақлаш</button>
+</form>
 
     
 
