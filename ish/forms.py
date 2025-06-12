@@ -84,8 +84,14 @@ class ExceluploadUpdateForm(forms.ModelForm):
         model = Excelupload
         fields = [
             'okpo', 'inn', 'soato', 'nomi', 'hisobot_nomi', 'hisobot_davri',
-            'xat_turi', 'xat_sanasi',
+            'xat_turi', 'xat_sanasi', 'pdf_fayli',
         ]
         widgets = {
             'xat_sanasi': forms.DateInput(attrs={'type': 'date'}),
         }
+        exclude = ['okpo']
+
+        def __init__(self, *args, **kwargs):
+                super(ExceluploadForm, self).__init__(*args, **kwargs)
+                self.fields['nomi'].widget.attrs['readonly'] = True
+        

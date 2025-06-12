@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.forms import ModelForm, ValidationError
-from .models import Xodim, Topshiriq, Hisobot, Hisobotdavri
+from .models import Xodim, Topshiriq, Hisobot, Hisobotdavri, Excelupload
 
 class HisobotForm(ModelForm):
     class Meta:
@@ -56,8 +56,15 @@ class HisobotdavriAdmin(admin.ModelAdmin):
 
     def __str__(self):
         return super().__str__()
+    
+class ExceluploadAdmin(admin.ModelAdmin):
+    list_display = ('okpo', 'inn', 'xat_sanasi',)
+
+    def __str__(self):
+        return super().__str__()
 admin.site.register(Xodim, XodimAdmin)
 admin.site.register(Topshiriq, TopshiriqAdmin)
 admin.site.register(Hisobot, HisobotAdmin)
 admin.site.register(Hisobotdavri, HisobotdavriAdmin)
 # admin.py fayli Django admin interfeysini sozlash uchun ishlatiladi.
+admin.site.register(Excelupload, ExceluploadAdmin)

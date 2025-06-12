@@ -28,7 +28,7 @@ def index(request):
 
     context = {
         'topshiriqlar': topshiriqlar,
-        'progress': progress,
+        #'progress': progress,
     }
     return render(request, 'ish/index.html', context)
 
@@ -134,10 +134,12 @@ def excelupload_listp(request):
     return render(request, 'ish/excelupload_list.html', {'uploads': uploads})
 
 def excelupload_list(request):
+    tabl = Excelupload.objects.all()
     if request.method == 'POST':
         record_id = request.POST.get('record_id')
+        pdf_file = request.FILES
         record = get_object_or_404(Excelupload, id=record_id)
-        form = ExceluploadUpdateForm(request.POST, instance=record)
+        form = ExceluploadUpdateForm(request.POST, request.FILES, instance=record)
         if form.is_valid():
             form.save()
             messages.success(request, "Ma'lumot yangilandi.")
@@ -154,5 +156,9 @@ def excelupload_list(request):
             'record': rec,
             'form': ExceluploadUpdateForm(instance=rec)
         })
+    
 
-    return render(request, 'ish/excelupload_list.html', {'record_forms': record_forms})
+    return render(request, 'ish/excelupload_list.html', {'record_forms': record_forms, 'ruyxat': tabl})
+
+def item_detail(request, id):
+    return render(request, 'ish/item_detail.html', {'nomer':id})

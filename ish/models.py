@@ -49,12 +49,13 @@ class Excelupload(models.Model):
     xat_sanasi = models.DateField(null=True, blank=True)
     kiritgan = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='excel_uploads', null=True, blank=True)
     aniqlangan_sanasi = models.DateField(auto_now_add=True)
+    pdf_fayli = models.FileField(upload_to='jarima_xatlari')
 
 
 
 
-    def __str__(self):
-        return f"Excel fayli: {self.file.name} (Yuklangan: {self.uploaded_at})"
+    # def __str__(self):
+        # return f"Excel fayli: {self.file.name} (Yuklangan: {self.uploaded_at})"
     
 
 class Hisobot(models.Model):

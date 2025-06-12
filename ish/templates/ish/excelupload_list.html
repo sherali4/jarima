@@ -5,61 +5,51 @@
 <div class="container mt-5">
     <h1>Ro'yxatga olinmagan xatlar ro'yxati</h1>
 
-    {% for item in record_forms %}
-    <div class="card mb-3 p-3 w-100">
-        <form method="post" class="row g-3">
-            {% csrf_token %}
-            <input type="hidden" name="record_id" value="{{ item.record.id }}">
-    
-            <div class="col-md-2">
-                {{ item.form.okpo.label_tag }}
-                {{ item.form.okpo|add_class:"form-control"|attr:"readonly:true" }}
-            </div>
-            <div class="col-md-2">
-                {{ item.form.inn.label_tag }}
-                {{ item.form.inn|add_class:"form-control"|attr:"readonly:true" }}
-            </div>
-            <div class="col-md-2">
-                {{ item.form.soato.label_tag }}
-                {{ item.form.soato|add_class:"form-control"|attr:"readonly:true" }}
-            </div>
-            <div class="col-md-3">
-                {{ item.form.nomi.label_tag }}
-                {{ item.form.nomi|add_class:"form-control"|attr:"readonly:true" }}
-            </div>
-            <div class="col-md-3">
-                {{ item.form.hisobot_nomi.label_tag }}
-                {{ item.form.hisobot_nomi|add_class:"form-control"|attr:"readonly:true" }}
-            </div>
-            <div class="col-md-3">
-                {{ item.form.hisobot_davri.label_tag }}
-                {{ item.form.hisobot_davri|add_class:"form-control"|attr:"readonly:true" }}
-            </div>
-            <div class="col-md-2">
-                {{ item.form.xat_turi.label_tag }}
-                {{ item.form.xat_turi|add_class:"form-control" }} {# Faqat shu ochiq #}
-            </div>
-            <div class="col-md-2">
-                {{ item.form.xat_sanasi.label_tag }}
-                {{ item.form.xat_sanasi|add_class:"form-control" }}
-            </div>
-    
-            <div class="col-12 mt-2">
-                <button type="submit" class="btn btn-primary">Yangilash</button>
-            </div>
-        </form>
-    </div>
-    
-    {% empty %}
-    <p>Hech qanday ma'lumot yo'q.</p>
-    {% endfor %}
 
-    {% if messages %}
-    <ul>
-        {% for message in messages %}
-        <li>{{ message }}</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
-</div>
+
+    <table
+        class="table table-striped table-hover table-bordered align-middle"
+    >
+        <thead class="table-secondary">
+            <tr>
+                <th>okpo</th>
+                <th>inn</th>
+                <th>nomi</th>
+                <th>hisobot nomi</th>
+                <th>hisobot_davri</th>
+                <th>xat turi</th>
+                <th>pdf_file</th>
+                <th>sababi</th>
+                <th>aniqlangan</th>
+                <th>xatni kiritish</th>
+            </tr>
+        </thead>
+        <tbody>
+                        
+            {% for ru in ruyxat %}
+            <tr>
+                <td scope="row">{{ru.okpo}}</td>
+                <td>{{ru.inn}}</td>
+                <td>{{ru.nomi}}</td>
+                <td>{{ru.hisobot_nomi}}</td>
+                <td>{{ru.hisobot_davri}}</td>
+                <td>{{ru.xat_turi}}</td>
+                {% if ru.pdf_fayli %}
+                <td><a href="{{ru.pdf_fayli.url}}">fayl</a></td>
+                {% else %}
+                <td></td>
+                {% endif %}
+                <td>{{ru.sababi}}</td>
+                <td>{{ru.aniqlangan_sanasi}}</td>
+                <td><a href="{% url 'item_detail' ru.pk %}">xatni kiritish</a></td>
+            </tr>
+            {% endfor %}
+           
+        </tbody>
+        <tfoot>
+            
+        </tfoot>
+    </table>
+
+
 {% endblock %}

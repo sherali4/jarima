@@ -20,6 +20,7 @@ urlpatterns = [
     path('jarima/', views.upload_excel, name='upload_excel'),  # jarima sahifasi
     path('ajax/load-hisobot-davri/', views.load_hisobot_davri, name='ajax_load_hisobot_davri'),
     path('excel/list/', views.excelupload_list, name='excelupload_list'),
+    path('kiritish/<int:id>/', views.item_detail, name='item_detail'),
 
     path('', views.index, name='index'),
     ]
