@@ -6,6 +6,7 @@ __pycache__/
 # Venv (virtual muhit)
 .venv/
 venv/
+myenv/
 ENV/
 env/
 *.env
