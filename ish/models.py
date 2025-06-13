@@ -46,14 +46,24 @@ class Excelupload(models.Model):
     nomi = models.CharField(max_length=400)
     sababi = models.CharField(max_length=200)
     opf = models.CharField(max_length=10)
-    hisobot_nomi = models.CharField(max_length=200, blank=True, null=True)
-    hisobot_davri = models.CharField(max_length=50, blank=True, null=True)
+    hisobot_nomi = models.CharField(max_length=200)
+    hisobot_davri = models.CharField(max_length=50)
     faoliyatsiz = models.BooleanField(default=False)
-    xat_turi = models.CharField(max_length=50, blank=True, null=True)
+    xat_turi = models.CharField(max_length=50)
     xat_sanasi = models.DateField(null=True, blank=True)
     kiritgan = models.ForeignKey('ish.CustomUser', on_delete=models.CASCADE, related_name='excel_uploads', null=True, blank=True)
     aniqlangan_sanasi = models.DateField(auto_now_add=True)
-    pdf_fayli = models.FileField(upload_to='jarima_xatlari')
+    pdf_fayli = models.FileField(upload_to='jarima_xatlari', null=True, blank=True)
+    tasdiqlangan = models.BooleanField(default=False)
+    tasdiqlangan_vaqt = models.DateTimeField(null=True, blank=True)  # remove auto_now_add
+
+    def save(self, *args, **kwargs):
+        if self.tasdiqlangan and not self.tasdiqlangan_vaqt:
+            self.tasdiqlangan_vaqt = timezone.now()
+        elif not self.tasdiqlangan:
+            self.tasdiqlangan_vaqt = None
+        super().save(*args, **kwargs)
+
 
 
     def __str__(self):
@@ -74,13 +84,13 @@ class Hisobotdavri(models.Model):
     tugash_sanasi = models.DateField(null=True, blank=True)
     nomi = models.ForeignKey(Hisobot, on_delete=models.CASCADE, related_name='hisobot_davri')
     def __str__(self):
-        return f"{self.name} ({self.tugash_sanasi})"
+        return f"{self.name} ({self.nomi})"
 
 
 class CustomUser(AbstractUser):
     telefon = models.CharField(max_length=20, blank=True, null=True)
     yosh = models.PositiveIntegerField(blank=True, null=True)
-    manzil = models.CharField(max_length=255, blank=True, null=True)
+    soato = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return self.username

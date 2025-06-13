@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h1>📚Ro'yxatga olinmagan xatlar ro'yxati</h1>
+    <h1>🗂 Jarima qilinmaganlar ro'yxati</h1>
 
 
 
@@ -17,11 +17,6 @@
                 <th>nomi</th>
                 <th>hisobot nomi</th>
                 <th>hisobot_davri</th>
-                <th>xat turi</th>
-                <th>pdf_file</th>
-                <th>sababi</th>
-                <th>aniqlangan</th>
-                <th>xatni kiritish</th>
             </tr>
         </thead>
         <tbody>
@@ -33,15 +28,6 @@
                 <td>{{ru.nomi}}</td>
                 <td>{{ru.hisobot_nomi}}</td>
                 <td>{{ru.hisobot_davri}}</td>
-                <td>{{ru.xat_turi}}</td>
-                {% if ru.pdf_fayli %}
-                <td><a href="{{ru.pdf_fayli.url}}">fayl</a></td>
-                {% else %}
-                <td></td>
-                {% endif %}
-                <td>{{ru.sababi}}</td>
-                <td>{{ru.aniqlangan_sanasi}}</td>
-                <td><a href="{% url 'item_detail' ru.pk %}" class="text-decoration-none">📎</a></td>
             </tr>
             {% endfor %}
            
