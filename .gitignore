@@ -77,6 +77,14 @@ pip-delete-this-directory.txt
 *.old
 *.tmp
 
+
+
+# media papkasining ichidagi barcha fayllar
+media/*
+
+# ammo .gitignore fayli yoki boshqa maxsus fayllar saqlansin
+!media/.gitkeep
+
 # unit test fayllar
 test-results/
 .junit/

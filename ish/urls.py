@@ -21,6 +21,7 @@ urlpatterns = [
     path('ajax/load-hisobot-davri/', views.load_hisobot_davri, name='ajax_load_hisobot_davri'),
     path('excel/list/', views.excelupload_list, name='excelupload_list'),
     path('kiritish/<int:pk>/', views.KorxonaUpdateView.as_view(), name='item_detail'),
+    path('jarima_qilinmagan/', views.JarimaQilinmagan, name='jarima_qilinmagan'),  #
     path('', views.index, name='index'),
     ]
 

@@ -214,3 +214,8 @@ class KorxonaUpdateView(UpdateView):
     template_name = 'ish/item_detail.html'  # Формани кўрсатувчи шаблон
     success_url = reverse_lazy('index')  # Янгиланганидан кейин қайта йўналиш
 
+
+def JarimaQilinmagan(request):
+    # Jarima qilinmagan korxonalarni ko'rsatish
+    jarima_qilinmagan = Excelupload.objects.filter(faoliyatsiz=False, xat_turi='chaqiriq').order_by('-aniqlangan_sanasi')
+    return render(request, 'ish/jarima_qilinmagan.html', {'ruyxat': jarima_qilinmagan})
