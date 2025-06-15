@@ -1,15 +1,28 @@
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.urls import reverse_lazy
 from django.utils import timezone
+import openpyxl
 import pandas as pd
 from django.views.generic.edit import UpdateView
-from ish.models import Topshiriq, Xodim, Excelupload, Hisobot, Hisobotdavri
+from ish.models import Dalolatnoma, Topshiriq, Xodim, Excelupload, Hisobot, Hisobotdavri
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login, logout
-from .forms import ExceluploadForm, ExceluploadUpdateForm, TopshiriqForm, ExceluploadForm
+from .forms import ExceluploadForm, ExceluploadUpdateForm, KorxonaForm, TopshiriqForm, ExceluploadForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+
+
+
+
+
+def unread_count(request):
+    if request.user.is_authenticated:
+        unread_count = Excelupload.objects.filter(user=request.user, bajarilgan=False).count()
+        unread_count= 55
+    else:
+        unread_count = 88
+    return {'unread_count': unread_count}
 
 
 
@@ -125,15 +138,18 @@ def upload_excel(request):
                 # BAZADAN TEKSHIRUV: ushbu okpo va inn mavjudmi?
                 #mavjud = Excelupload.objects.filter(okpo=okpo_val, inn=inn_val).exists()
                 
-                mavjud = Excelupload.objects.filter(okpo=okpo_val, inn=inn_val, hisobot_nomi=hisobot, xat_turi = "ko'rsatma", faoliyatsiz =False).exists()
-                sudga_xat = Excelupload.objects.filter(okpo=okpo_val, inn=inn_val, hisobot_nomi=hisobot, xat_turi = "chaqiriq", faoliyatsiz =False).exists()
+                mavjud = Excelupload.objects.filter(okpo=okpo_val, inn=inn_val, hisobot_nomi=hisobot, xat_turi = "ko'rsatma", faoliyatsiz =False, dalolatnomasi_mavjudligi = False).exists()
+                sudga_xat = Excelupload.objects.filter(okpo=okpo_val, inn=inn_val, hisobot_nomi=hisobot, xat_turi = "chaqiriq", faoliyatsiz =False, dalolatnomasi_mavjudligi = False).exists()
                 if mavjud and not sudga_xat:
                     xat_turi = 'chaqiriq'
                 elif sudga_xat:
                     xat_turi = 'sudga xat'
                 else:
                     xat_turi = 'ko\'rsatma'
-
+                soato4=str(row.get('soato'))[:4]
+                # agar dalolatnoma mavjud bo'lsa, xat turi 'dalolatnoma' bo'ladi
+                dalolatnoma_mavjud = Dalolatnoma.objects.filter(okpo=okpo_val, inn=inn_val, soato4=soato4).exists()
+                
 
                 Excelupload.objects.create(
                     hisobot_nomi=hisobot,
@@ -144,7 +160,8 @@ def upload_excel(request):
                     nomi=row.get('nomi', ''),
                     sababi=row.get('sababi', ''),
                     opf=row.get('opf', ''),
-                    xat_turi=xat_turi,                                        
+                    xat_turi=xat_turi,
+                    dalolatnomasi_mavjudligi=True if dalolatnoma_mavjud else False,                                        
                 )
                 
 
@@ -169,7 +186,7 @@ def excelupload_listp(request):
     return render(request, 'ish/excelupload_list.html', {'uploads': uploads})
 
 def excelupload_list(request):
-    tabl = Excelupload.objects.filter(tasdiqlangan=False, faoliyatsiz=False).filter(xat_sanasi__isnull=True).filter(pdf_fayli='').exclude(xat_turi="sudga xat").order_by('-aniqlangan_sanasi')  # tasdiqlanmagan va faoliyatsiz bo'lmaganlar
+    tabl = Excelupload.objects.filter(tasdiqlangan=False, faoliyatsiz=False).filter(xat_sanasi__isnull=True).filter(pdf_fayli='').filter(dalolatnomasi_mavjudligi = False).exclude(xat_turi="sudga xat").order_by('-aniqlangan_sanasi')  # tasdiqlanmagan va faoliyatsiz bo'lmaganlar
     if request.method == 'POST':
         record_id = request.POST.get('record_id')
         pdf_file = request.FILES
@@ -196,7 +213,7 @@ def excelupload_list(request):
 
     return render(request, 'ish/excelupload_list.html', {'record_forms': record_forms, 'ruyxat': tabl})
 
-def item_detail(request, id):
+def item_detail1(request, id):
     korxona = get_object_or_404(Excelupload, id=id)
     context = {
         'korxona': korxona,
@@ -204,18 +221,57 @@ def item_detail(request, id):
     }
     return render(request, 'ish/item_detail.html', context=context)
 
-
-
-
-
 class KorxonaUpdateView(UpdateView):
-    model = Excelupload    
-    fields = ['xat_sanasi', 'pdf_fayli']  # Қайси майдонлар таҳрирланади
-    template_name = 'ish/item_detail.html'  # Формани кўрсатувчи шаблон
-    success_url = reverse_lazy('index')  # Янгиланганидан кейин қайта йўналиш
+    model = Excelupload
+    fields = ['xat_sanasi', 'pdf_fayli']  # Qaysi maydonlar tahrirlanadi
+    template_name = 'ish/item_detail.html'  # BU YER MUHIM
+    success_url = reverse_lazy('index')  # Forma muvaffaqiyatli topshirilganda qayerga yo‘naltirish
+
 
 
 def JarimaQilinmagan(request):
     # Jarima qilinmagan korxonalarni ko'rsatish
     jarima_qilinmagan = Excelupload.objects.filter(faoliyatsiz=False, xat_turi='chaqiriq').order_by('-aniqlangan_sanasi')
     return render(request, 'ish/jarima_qilinmagan.html', {'ruyxat': jarima_qilinmagan})
+
+def Exceluploadtoexcel(request):
+    # Excel faylini yuklash
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.title = 'Jarima baza'
+
+    # Sarlavhalar
+    sheet.append([
+        'OKPO', 'INN', 'Soato', 'Nomi', 'Sababi',
+        'OPF', 'Hisobot Nomi', 'Hisobot Davri',
+        'Faoliyatsiz', 'Xat Turi', 'Xat Sanasi', 'Aniqlangan Sanasi'
+    ])
+
+    uploads = Excelupload.objects.all()
+    if not uploads:
+        messages.error(request, "Hozirda yuklangan ma'lumotlar mavjud emas.")
+        return redirect('excelupload_list')
+
+    for upload in uploads:
+        sheet.append([
+            upload.okpo,
+            upload.inn,
+            upload.soato,
+            upload.nomi,
+            upload.sababi,
+            upload.opf,
+            upload.hisobot_nomi,
+            upload.hisobot_davri,
+            'Ha' if upload.faoliyatsiz else 'Yo‘q',
+            upload.xat_turi,
+            upload.xat_sanasi.strftime('%Y-%m-%d') if upload.xat_sanasi else '',
+            upload.aniqlangan_sanasi.strftime('%Y-%m-%d') if upload.aniqlangan_sanasi else '',
+        ])
+
+    # Excel faylni HTTP javobga yozish
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = 'attachment; filename=jarima_baza.xlsx'
+    workbook.save(response)
+    return response

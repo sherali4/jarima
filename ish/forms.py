@@ -1,3 +1,5 @@
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
@@ -79,7 +81,7 @@ class ExceluploadForm(forms.Form):
     hisobot = forms.ModelChoiceField(
         queryset=Hisobot.objects.all(),
         label='Hisobot turini tanlash',
-        
+
         empty_label='Hisobot turini tanlang',
         help_text='Yuklangan faylga mos hisobotni tanlang.',
         required=False
@@ -120,3 +122,19 @@ class ExceluploadUpdateForm(forms.ModelForm):
         def __init__(self, *args, **kwargs):
                 super(ExceluploadForm, self).__init__(*args, **kwargs)
                 self.fields['nomi'].widget.attrs['readonly'] = True
+
+class KorxonaForm(forms.ModelForm):
+    class Meta:
+        model = Excelupload
+        fields = 'xat_sanasi',
+
+        widgets = {
+            'xat_sanasi': forms.DateInput(attrs={'type': 'date', 'class': 'form-control', 'placeholder': 'Xat sanasini kiriting'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.template_pack = 'bootstrap5'  # Bu borligi kerak
+        self.helper.add_input(Submit('submit', 'Saqlash'))

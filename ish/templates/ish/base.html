@@ -95,9 +95,11 @@
     <div class="sidebar border-end list-group">
       <h5 class="px-3">Menyu</h5>
       <a class="list-group-item {% if request.resolver_match.url_name == 'upload_excel' %}active{% endif %}" href="{% url 'upload_excel' %}">📚 Bazaga kiritish</a>
-      <a class="list-group-item {% if request.resolver_match.url_name == 'excelupload_list' %}active{% endif %}" href="{% url 'excelupload_list' %}">📎 Kiritilmagan xatlar</a>
+      <a class="list-group-item {% if request.resolver_match.url_name == 'excelupload_list' %}active{% endif %}" href="{% url 'excelupload_list' %}">📎 Kiritilmagan xatlar
+        {% if unread %}<span class="badge bg-danger">4</span>{% else %}{% endif %}  
+      </a>
       <a class="list-group-item {% if request.resolver_match.url_name == 'jarima_qilinmagan' %}active{% endif %}" href="{% url 'jarima_qilinmagan' %}">🗂 jarima_qilinmaganlar</a>
-      <a class="list-group-item" href="#">💻 Foydalanuvchilar</a>
+      <a class="list-group-item" href="{% url 'excel_download' %}">🗃️ Ma'lumotlar bazasi</a>
       <a  class="list-group-item" href="#">📒 Hisobotlar</a>
       <a href="#">⚙️ Sozlamalar</a>
     </div>
@@ -109,8 +111,6 @@
 
       <h2>Bosh sahifa</h2>
       <p>Bu sahifada chapda yordamchi menyu va tepada asosiy navigatsiya mavjud.</p>
-
-
       {% endblock %}
     </div>
   </div>
@@ -139,8 +139,6 @@
           });
       });
   </script>
-  
-
   <!-- Bootstrap 5 JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

@@ -56,6 +56,9 @@ class Excelupload(models.Model):
     pdf_fayli = models.FileField(upload_to='jarima_xatlari', null=True, blank=True)
     tasdiqlangan = models.BooleanField(default=False)
     tasdiqlangan_vaqt = models.DateTimeField(null=True, blank=True)  # remove auto_now_add
+    dalolatnomasi_mavjudligi = models.BooleanField(default=False)
+    nazoratdan_chiqarilgan = models.BooleanField(default=False)
+    izoh = models.TextField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if self.tasdiqlangan and not self.tasdiqlangan_vaqt:
@@ -64,12 +67,9 @@ class Excelupload(models.Model):
             self.tasdiqlangan_vaqt = None
         super().save(*args, **kwargs)
 
-
-
     def __str__(self):
         return super().__str__()
-
-
+    
     # def __str__(self):
         # return f"Excel fayli: {self.file.name} (Yuklangan: {self.uploaded_at})"
     
@@ -94,3 +94,21 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return self.username
+
+class Dalolatnoma(models.Model):
+    okpo = models.CharField(max_length=8)
+    inn = models.CharField(max_length=9)
+    soato4 = models.CharField(max_length=20)
+    yaratilgan_vaqti = models.DateTimeField(auto_now_add=True)
+    yangilangan_vaqti = models.DateTimeField(auto_now=True)
+    izoh = models.TextField(blank=True, null=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='dalolatnomalar', null=True, blank=True)
+    dalolatnoma_fayli = models.FileField(upload_to='dalolatnomalar/', null=True, blank=True)
+    class Meta:
+        verbose_name = 'Dalolatnoma'
+        verbose_name_plural = 'Dalolatnomalar'
+        ordering = ['-yaratilgan_vaqti']
+    
+
+    def __str__(self):
+        return f"{self.okpo}-{self.inn} ({self.soato4})"

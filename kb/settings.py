@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     "ish",
     "social_django",
     "widget_tweaks",  # widget_tweaks qo'shilgan
+    'crispy_forms',  # crispy_forms qo'shilgan
+    'crispy_bootstrap5',  # crispy_forms uchun bootstrap5 qo'shilgan
 ]
 
 MIDDLEWARE = [
@@ -106,7 +108,8 @@ LOGIN_REDIRECT_URL = '/'  # Login muvaffaqiyatli bo‘lsa – bu manzilga yo‘n
 
 AUTH_USER_MODEL = 'ish.CustomUser'
 
-
+CRISPY_ALLOWED_TEMPLATE_PACKS = ["bootstrap5"]
+CRISPY_TEMPLATE_PACK = 'bootstrap5'  # crispy_forms uchun shablon to'plami
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
