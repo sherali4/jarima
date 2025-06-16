@@ -240,12 +240,8 @@ def Exceluploadtoexcel(request):
     sheet = workbook.active
     sheet.title = 'Jarima baza'
 
-    # Sarlavhalar
-    sheet.append([
-        'OKPO', 'INN', 'Soato', 'Nomi', 'Sababi',
-        'OPF', 'Hisobot Nomi', 'Hisobot Davri',
-        'Faoliyatsiz', 'Xat Turi', 'Xat Sanasi', 'Aniqlangan Sanasi'
-    ])
+    
+    sheet.append(['OKPO', 'INN', 'SOATO', 'Nomi', 'Sababi', 'OPF', 'Hisobot Nomi', 'Hisobot Davri', 'Faoliyatsiz', 'Xat Turi', 'Xat Sanasi', 'Aniqlangan Sanasi'])
 
     uploads = Excelupload.objects.all()
     if not uploads:
@@ -275,3 +271,20 @@ def Exceluploadtoexcel(request):
     response['Content-Disposition'] = 'attachment; filename=jarima_baza.xlsx'
     workbook.save(response)
     return response
+
+
+
+class DalolatnomaUpdateView(UpdateView):
+    model = Dalolatnoma
+    fields = ['pdf_fayli', 'soato4']  # Qaysi maydonlar tahrirlanadi
+    template_name = 'ish/dalolatnoma_update.html'  # BU YER MUHIM
+    success_url = reverse_lazy('index')  # Forma muvaffaqiyatli topshirilganda qayerga yo‘naltirish
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(Dalolatnoma, id=self.kwargs['pk'])
+    def form_valid(self, form):
+        dalolatnoma = form.save(commit=False)
+        dalolatnoma.user = self.request.user
+        dalolatnoma.save()
+        messages.success(self.request, "Dalolatnoma muvaffaqiyatli yangilandi.")
+        return super().form_valid(form)

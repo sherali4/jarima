@@ -23,6 +23,7 @@ urlpatterns = [
     path('kiritish/<int:pk>/', views.KorxonaUpdateView.as_view(), name='item_detail'),
     path('jarima_qilinmagan/', views.JarimaQilinmagan, name='jarima_qilinmagan'),
     path('excel/download/', views.Exceluploadtoexcel, name='excel_download'),
+    path('dalolatnoma/<int:pk>/', views.DalolatnomaUpdateView.as_view(), name='dalolatnoma_update'),
     path('', views.index, name='index'),
     ]
 
