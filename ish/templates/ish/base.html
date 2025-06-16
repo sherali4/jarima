@@ -99,6 +99,8 @@
         {% if unread %}<span class="badge bg-danger">4</span>{% else %}{% endif %}  
       </a>
       <a class="list-group-item {% if request.resolver_match.url_name == 'jarima_qilinmagan' %}active{% endif %}" href="{% url 'jarima_qilinmagan' %}">🗂 jarima_qilinmaganlar</a>
+      <a class="list-group-item {% if request.resolver_match.url_name == 'dalolatnoma_list' %}active{% endif %}" href="{% url 'dalolatnoma_list' %}">📄 Dalolatnomalar</a>
+      
       <a class="list-group-item" href="{% url 'excel_download' %}">🗃️ Ma'lumotlar bazasi</a>
       <a  class="list-group-item" href="#">📒 Hisobotlar</a>
       <a href="#">⚙️ Sozlamalar</a>

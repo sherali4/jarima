@@ -3,7 +3,7 @@ from crispy_forms.layout import Submit
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Hisobot, Topshiriq, Excelupload, Hisobotdavri
+from .models import Dalolatnoma, Hisobot, Topshiriq, Excelupload, Hisobotdavri
 
 
 
@@ -138,3 +138,14 @@ class KorxonaForm(forms.ModelForm):
         self.helper.form_method = 'post'
         self.helper.template_pack = 'bootstrap5'  # Bu borligi kerak
         self.helper.add_input(Submit('submit', 'Saqlash'))
+
+class DalolatnomaForm(forms.ModelForm):
+    class Meta:
+        model = Dalolatnoma
+        fields = ['okpo', 'inn', 'soato4', 'izoh', 'dalolatnoma_fayli']
+        widgets = {
+            'okpo': forms.HiddenInput(),
+            'inn': forms.HiddenInput(),
+            'soato4': forms.HiddenInput(),
+            'izoh': forms.Textarea(attrs={'rows': 3}),
+        }

@@ -1,0 +1,14 @@
+{% extends 'ish/base.html' %}
+{% load crispy_forms_tags %}
+
+
+{% block content %}
+<h3>Dalolatnoma yaratish - {{ excel.nomi }}</h3>
+<form method="post" enctype="multipart/form-data">
+    
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Saqlash</button>
+</form>
+
+{% endblock %}

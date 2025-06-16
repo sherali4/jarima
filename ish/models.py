@@ -99,11 +99,14 @@ class Dalolatnoma(models.Model):
     okpo = models.CharField(max_length=8)
     inn = models.CharField(max_length=9)
     soato4 = models.CharField(max_length=20)
+    nomi = models.CharField(max_length=400, blank=True, null=True)
     yaratilgan_vaqti = models.DateTimeField(auto_now_add=True)
     yangilangan_vaqti = models.DateTimeField(auto_now=True)
     izoh = models.TextField(blank=True, null=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='dalolatnomalar', null=True, blank=True)
     dalolatnoma_fayli = models.FileField(upload_to='dalolatnomalar/', null=True, blank=True)
+    tasdiqlangan = models.BooleanField(default=False)
+    tasdiqlangan_vaqti = models.DateTimeField(null=True, blank=True)  # remove auto_now_add
     class Meta:
         verbose_name = 'Dalolatnoma'
         verbose_name_plural = 'Dalolatnomalar'

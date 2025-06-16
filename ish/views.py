@@ -8,7 +8,7 @@ from ish.models import Dalolatnoma, Topshiriq, Xodim, Excelupload, Hisobot, Hiso
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login, logout
-from .forms import ExceluploadForm, ExceluploadUpdateForm, KorxonaForm, TopshiriqForm, ExceluploadForm
+from .forms import DalolatnomaForm, ExceluploadForm, ExceluploadUpdateForm, KorxonaForm, TopshiriqForm, ExceluploadForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
@@ -186,11 +186,12 @@ def excelupload_listp(request):
     return render(request, 'ish/excelupload_list.html', {'uploads': uploads})
 
 def excelupload_list(request):
-    tabl = Excelupload.objects.filter(tasdiqlangan=False, faoliyatsiz=False).filter(xat_sanasi__isnull=True).filter(pdf_fayli='').filter(dalolatnomasi_mavjudligi = False).exclude(xat_turi="sudga xat").order_by('-aniqlangan_sanasi')  # tasdiqlanmagan va faoliyatsiz bo'lmaganlar
+    tabl = Excelupload.objects.filter(faoliyatsiz=False).filter(tasdiqlangan=False).exclude(xat_turi="sudga xat").order_by('-aniqlangan_sanasi')  
     if request.method == 'POST':
         record_id = request.POST.get('record_id')
         pdf_file = request.FILES
         record = get_object_or_404(Excelupload, id=record_id)
+        
         form = ExceluploadUpdateForm(request.POST, request.FILES, instance=record)
         if form.is_valid():
             form.save()
@@ -209,8 +210,6 @@ def excelupload_list(request):
             'record': rec,
             'form': ExceluploadUpdateForm(instance=rec)
         })
-    
-
     return render(request, 'ish/excelupload_list.html', {'record_forms': record_forms, 'ruyxat': tabl})
 
 def item_detail1(request, id):
@@ -288,3 +287,82 @@ class DalolatnomaUpdateView(UpdateView):
         dalolatnoma.save()
         messages.success(self.request, "Dalolatnoma muvaffaqiyatli yangilandi.")
         return super().form_valid(form)
+
+
+
+def dalolatnoma_from_excelupload(request, excel_id):
+    excelupload = get_object_or_404(Excelupload, id=excel_id)
+    initial_data = {
+        'okpo': excelupload.okpo,
+        'inn': excelupload.inn,
+        'soato4': excelupload.soato,
+        'nomi': excelupload.nomi,
+    }
+
+    if request.method == 'POST':
+        form = DalolatnomaForm(request.POST, request.FILES)
+        if form.is_valid():
+            dalolatnoma = form.save(commit=False)
+            dalolatnoma.user = request.user
+            dalolatnoma.save()
+            # Optionally: Excelupload holatini yangilash
+            excelupload.dalolatnomasi_mavjudligi = True
+            excelupload.save()
+            return redirect('dalolatnoma_list')
+    else:
+        form = DalolatnomaForm(initial=initial_data)
+
+    return render(request, 'ish/from_excel.html', {'form': form, 'excel': excelupload})
+
+
+
+def dalolatnoma_from_excelupload(request, excel_id):
+    excelupload = get_object_or_404(Excelupload, id=excel_id)
+
+    initial_data = {
+        'okpo': excelupload.okpo,
+        'inn': excelupload.inn,
+        'soato4': excelupload.soato,
+        'nomi': excelupload.nomi,
+    }
+
+    if request.method == 'POST':
+        form = DalolatnomaForm(request.POST, request.FILES)
+        if form.is_valid():
+            dalolatnoma = form.save(commit=False)
+            dalolatnoma.user = request.user
+            dalolatnoma.save()
+            excelupload.dalolatnomasi_mavjudligi = True
+            excelupload.save()
+            return redirect('excelupload_list')
+    else:
+        form = DalolatnomaForm(initial=initial_data)
+
+    return render(request, 'ish/from_excel.html', {'form': form, 'excel': excelupload})
+
+
+def dalolatnoma_list(request):
+    tabl = Dalolatnoma.objects.all().order_by('-id')  # tasdiqlanmagan va faoliyatsiz bo'lmaganlar
+    if request.method == 'POST':
+        record_id = request.POST.get('record_id')
+        pdf_file = request.FILES
+        record = get_object_or_404(Dalolatnoma, id=record_id)
+        form = DalolatnomaForm(request.POST, request.FILES, instance=record)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Ma'lumot yangilandi.")
+            return redirect('dalolatnoma_list')
+        else:
+            messages.error(request, "Formada xatolik bor, iltimos tekshiring.")
+    else:
+        form = None
+
+    records = Dalolatnoma.objects.all().order_by('-id')  # so‘nggi yuklanganlar birinchi
+
+    record_forms = []
+    for rec in records:
+        record_forms.append({
+            'record': rec,
+            'form': DalolatnomaForm(instance=rec)
+        })
+    return render(request, 'ish/dalolatnoma_list.html', {'record_forms': record_forms, 'ruyxat': tabl})
