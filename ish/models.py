@@ -115,3 +115,4 @@ class Dalolatnoma(models.Model):
 
     def __str__(self):
         return f"{self.okpo}-{self.inn} ({self.soato4})"
+
