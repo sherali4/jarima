@@ -1,0 +1,43 @@
+{% extends 'ish/base.html' %}
+
+{% block title %}Bosh sahifa{% endblock %}
+
+{% block content %}
+<h1><a href="{% url 'social:begin' 'google-oauth2' %}?next={{ request.path }}" class="btn btn-danger">
+    Google orqali kirish
+</a>
+</h1>
+<h1 class="mb-4">📋 Topshiriqlar ro‘yxati</h1>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label for="nomi" class="form-label">Topshiriq nomi:</label>
+        <input type="text" class="form-control" id="nomi" name="nomi" required>
+    </div>
+    <div class="mb-3">
+        <label for="tavsif" class="form-label">Tavsif:</label>
+        <textarea class="form-control" id="tavsif" name="tavsif"></textarea>
+    </div>
+    <div class="mb-3">
+        <label for="file" class="form-label">Fayl (ixtiyoriy):</label>
+        <input type="file" class="form-control" id="file" name="file">
+    </div>
+    <div class="mb-3">
+        <label for="tugash_sanasi" class="form-label">Tugash sanasi:</label>
+        <input type="date" class="form-control" id="tugash_sanasi" name="tugash_sanasi">
+    </div>
+    <div class="mb-3">
+        <label for="masullar" class="form-label">Mas'ul xodimlar:</label>
+        <select multiple class="form-control" id="masullar" name="masullar">
+            {% for xodim in xodimlar %}
+                <option value="{{ xodim.id }}">{{ xodim.ism }} {{ xodim.familiya }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Topshiriq qo'shish</button>
+</form>
+
+
+
+
+{% endblock %}

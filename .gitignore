@@ -1,0 +1,98 @@
+# __pycache__ va kompilyatsiyalangan fayllar
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Venv (virtual muhit)
+.venv/
+venv/
+myenv/
+.myenv/
+ENV/
+env/
+*.env
+*.venv
+
+# IDE fayllari
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS fayllari
+.DS_Store
+Thumbs.db
+
+# Log fayllar
+*.log
+
+# Parollar yoki maxfiy ma’lumotlar
+*.env
+.env.*
+secrets.json
+
+# Jupyter Notebook checkpoint fayllari
+.ipynb_checkpoints
+
+# test coverage / pytest / tox
+.coverage
+coverage.xml
+*.cover
+htmlcov/
+.tox/
+.pytest_cache/
+nosetests.xml
+
+# build va dist papkalar
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# mypy, pylint, flake8, ruff keshlari
+.mypy_cache/
+.pylint.d/
+.pyre/
+.pytype/
+ruff_cache/
+
+# pip fayllari
+pip-log.txt
+pip-delete-this-directory.txt
+
+# VS Code debugging fayllari
+*.code-workspace
+*.launch.json
+
+# PyInstaller
+*.spec
+
+# sqlite bazalari
+
+*.db
+
+# local dump/data files
+*.dump
+*.bak
+*.old
+*.tmp
+
+
+
+# media papkasining ichidagi barcha fayllar
+media/*
+
+# ammo .gitignore fayli yoki boshqa maxsus fayllar saqlansin
+!media/.gitkeep
+
+# unit test fayllar
+test-results/
+.junit/
+
+# ipython history
+.history
+
+# coverage
+.cache/
+.env/
+.myenv/
