@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.http import HttpResponse, JsonResponse
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -11,7 +12,7 @@ from django.contrib.auth import login, logout
 from .forms import DalolatnomaForm, ExceluploadForm, ExceluploadUpdateForm, KorxonaForm, TopshiriqForm, ExceluploadForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-
+from .tekshir import tekshirish
 
 
 
@@ -29,20 +30,6 @@ def unread_count(request):
 
 def index(request):
     topshiriqlar = Topshiriq.objects.all()
-
-    for task in topshiriqlar:
-        if task.tugash_sanasi:
-            total_days = (task.tugash_sanasi - task.yaratilgan_vaqti.date()).days
-            passed_days = (timezone.localdate() - task.yaratilgan_vaqti.date()).days
-            if total_days > 0:
-                progress = int(passed_days / total_days * 100)
-                progress = max(0, min(progress, 100))  # 0 dan 100 gacha chegaralash
-            else:
-                progress = 100 if task.bajarilgan else 0
-        else:
-            progress = 0
-        task.progress = progress
-        print(f"Task: {task.nomi}, Progress: {progress}%")
 
     context = {
         'topshiriqlar': topshiriqlar,
@@ -164,8 +151,6 @@ def upload_excel(request):
                     dalolatnomasi_mavjudligi=True if dalolatnoma_mavjud else False,                                        
                 )
                 
-
-
             messages.success(request, "Fayl muvaffaqiyatli yuklandi va ma'lumotlar saqlandi.")
             return redirect('upload_excel')
         else:
@@ -222,14 +207,25 @@ def item_detail1(request, id):
 
 class KorxonaUpdateView(UpdateView):
     model = Excelupload
-    fields = ['xat_sanasi', 'pdf_fayli']  # Qaysi maydonlar tahrirlanadi
-    template_name = 'ish/item_detail.html'  # BU YER MUHIM
+    fields = ['xat_sanasi', 'pdf_fayli']  
+    template_name = 'ish/item_detail.html'  
     success_url = reverse_lazy('index')  # Forma muvaffaqiyatli topshirilganda qayerga yo‘naltirish
-
+    def form_valid(self, form):
+        instance = form.save(commit=False)
+        soato4 = instance.soato[:4]
+        inn = instance.inn
+        xat_turi = instance.xat_turi
+        hisobot_turi = instance.hisobot_nomi
+        yil = str(instance.xat_sanasi)[:4]
+        aniqlangan_sana = datetime.strptime(str(instance.aniqlangan_sanasi), "%Y-%m-%d").strftime("%d.%m.%Y")
+        xat_sanasi = form.cleaned_data['xat_sanasi']
+        xat_sanasi = datetime.strptime(str(form.cleaned_data['xat_sanasi']), "%Y-%m-%d").strftime("%d.%m.%Y")
+        fayl_nomi = form.cleaned_data['pdf_fayli']
+        tekshirish(soato4, inn, xat_turi, hisobot_turi, yil, aniqlangan_sana, xat_sanasi, fayl_nomi)
+        return super().form_valid(form)
 
 
 def JarimaQilinmagan(request):
-    # Jarima qilinmagan korxonalarni ko'rsatish
     jarima_qilinmagan = Excelupload.objects.filter(faoliyatsiz=False, xat_turi='chaqiriq').order_by('-aniqlangan_sanasi')
     return render(request, 'ish/jarima_qilinmagan.html', {'ruyxat': jarima_qilinmagan})
 

@@ -59,6 +59,7 @@ class Excelupload(models.Model):
     dalolatnomasi_mavjudligi = models.BooleanField(default=False)
     nazoratdan_chiqarilgan = models.BooleanField(default=False)
     izoh = models.TextField(null=True, blank=True)
+    xat_izohi = models.TextField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if self.tasdiqlangan and not self.tasdiqlangan_vaqt:
