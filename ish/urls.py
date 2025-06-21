@@ -19,13 +19,13 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(next_page='login'), name='logout'),
     path('jarima/', views.upload_excel, name='upload_excel'),  # jarima sahifasi
     path('ajax/load-hisobot-davri/', views.load_hisobot_davri, name='ajax_load_hisobot_davri'),
-    path('excel/list/', views.excelupload_list, name='excelupload_list'),
-    path('dalolatnoma/list/', views.dalolatnoma_list, name='dalolatnoma_list'),
-    path('kiritish/<int:pk>/', views.KorxonaUpdateView.as_view(), name='item_detail'),
-    path('jarima_qilinmagan/', views.JarimaQilinmagan, name='jarima_qilinmagan'),
-    path('excel/download/', views.Exceluploadtoexcel, name='excel_download'),
-    path('dalolatnoma/<int:pk>/', views.DalolatnomaUpdateView.as_view(), name='dalolatnoma_update'),
-    path('dalolatnoma/from-excel/<int:excel_id>/', views.dalolatnoma_from_excelupload, name='dalolatnoma_from_excel'),
+    path('jarima/excel/list/', views.excelupload_list, name='excelupload_list'),
+    path('jarima/dalolatnoma/list/', views.dalolatnoma_list, name='dalolatnoma_list'),
+    path('jarima/kiritish/<int:pk>/', views.KorxonaUpdateView.as_view(), name='item_detail'),
+    path('jarima/jarima_qilinmagan/', views.JarimaQilinmagan, name='jarima_qilinmagan'),
+    path('jarima/excel/download/', views.Exceluploadtoexcel, name='excel_download'),
+    path('jarima/dalolatnoma/<int:pk>/', views.DalolatnomaUpdateView.as_view(), name='dalolatnoma_update'),
+    path('jarima/dalolatnoma/from-excel/<int:excel_id>/', views.dalolatnoma_from_excelupload, name='dalolatnoma_from_excel'),
 
     path('', views.index, name='index'),
     ]

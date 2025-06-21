@@ -1,4 +1,5 @@
-from django.http import HttpResponse, JsonResponse
+from datetime import datetime
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.urls import reverse_lazy
 from django.utils import timezone
 import openpyxl
@@ -7,25 +8,16 @@ from django.views.generic.edit import UpdateView
 from ish.models import Dalolatnoma, Topshiriq, Xodim, Excelupload, Hisobot, Hisobotdavri
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth import login, logout
-from .forms import DalolatnomaForm, ExceluploadForm, ExceluploadUpdateForm, KorxonaForm, TopshiriqForm, ExceluploadForm
+from django.contrib.auth import login, logout, authenticate
+from .forms import DalolatnomaForm, ExceluploadForm, ExceluploadUpdateForm, KorxonaForm, TopshiriqForm, CustomUserForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from own.tekshir import tekshirish
+import os
 
 
-
-
-
-def unread_count(request):
-    if request.user.is_authenticated:
-        unread_count = Excelupload.objects.filter(user=request.user, bajarilgan=False).count()
-        unread_count= 55
-    else:
-        unread_count = 88
-    return {'unread_count': unread_count}
-
-
-
+viloyat = ['1703', '1706', '1708', '1710', '1712', '1714', '1718', '1722', '1724', '1726', '1727', '1730', '1733']
+tuman = ['1710207', '1710212', '1710220', '1710224', '1710229', '1710232', '1710233', '1710234', '1710235', '1710237', '1710242', '1710245', '1710250', '1710401']
 
 def index(request):
     topshiriqlar = Topshiriq.objects.all()
@@ -62,9 +54,6 @@ def signup_view1(request):
         form = FoydalanuvchiRoyxatForm()
     return render(request, 'auth/signup.html', {'form': form})
 
-from django.contrib.auth import authenticate, login
-from django.shortcuts import render, redirect
-from .forms import CustomUserForm
 
 def signup_view(request):
     if request.method == 'POST':
@@ -184,9 +173,12 @@ def load_hisobot_davri(request):
 def excelupload_listp(request):
     uploads = Excelupload.objects.all().order_by('-aniqlangan_sanasi')  # so‘nggi yuklanganlar birinchi
     return render(request, 'ish/excelupload_list.html', {'uploads': uploads})
-
+@login_required
 def excelupload_list(request):
-    tabl = Excelupload.objects.filter(faoliyatsiz=False).filter(tasdiqlangan=False).exclude(xat_turi="sudga xat").order_by('-aniqlangan_sanasi')  
+    if len(request.user.soato) == 4 and request.user.soato in viloyat:
+        tabl = Excelupload.objects.filter(faoliyatsiz=False).filter(tasdiqlangan=False).exclude(xat_turi="sudga xat").filter(soato__startswith = request.user.soato).order_by('-aniqlangan_sanasi')  
+    else:
+        tabl = Excelupload.objects.filter(faoliyatsiz=False).filter(tasdiqlangan=False).exclude(xat_turi="sudga xat").order_by('-aniqlangan_sanasi')  
     if request.method == 'POST':
         record_id = request.POST.get('record_id')
         pdf_file = request.FILES
@@ -220,13 +212,46 @@ def item_detail1(request, id):
     }
     return render(request, 'ish/item_detail.html', context=context)
 
-class KorxonaUpdateView(UpdateView):
+
+class KorxonaUpdateVie1w(UpdateView):
     model = Excelupload
     fields = ['xat_sanasi', 'pdf_fayli']  # Qaysi maydonlar tahrirlanadi
     template_name = 'ish/item_detail.html'  # BU YER MUHIM
+    success_url = reverse_lazy('excelupload_list')  # Forma muvaffaqiyatli topshirilganda qayerga yo‘naltirish
+
+    def dispatch(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if request.user.soato == '1700':
+            pass
+        elif self.object.soato[:4] != request.user.soato:
+            return HttpResponseForbidden("Siz bu ma'lumotni tahrirlay olmaysiz.")
+        return super().dispatch(request, *args, **kwargs)
+
+
+
+
+class KorxonaUpdateView(UpdateView):
+    model = Excelupload
+    fields = ['xat_sanasi', 'pdf_fayli']  
+    template_name = 'ish/item_detail.html'  
     success_url = reverse_lazy('index')  # Forma muvaffaqiyatli topshirilganda qayerga yo‘naltirish
+    def form_valid(self, form):
+        instance = form.save(commit=False)
+        soato4 = instance.soato[:4]
+        inn = instance.inn
+        xat_turi = instance.xat_turi
+        hisobot_turi = instance.hisobot_nomi
+        yil = str(instance.xat_sanasi)[:4]
+        aniqlangan_sana = datetime.strptime(str(instance.aniqlangan_sanasi), "%Y-%m-%d").strftime("%d.%m.%Y")
+        xat_sanasi = form.cleaned_data['xat_sanasi']
+        xat_sanasi = datetime.strptime(str(form.cleaned_data['xat_sanasi']), "%Y-%m-%d").strftime("%d.%m.%Y")
+        fayl_nomi = form.cleaned_data['pdf_fayli']
 
-
+        if fayl_nomi:
+            kengaytma = os.path.splitext(fayl_nomi.name)[1]  # .pdf kabi natija
+            if kengaytma.lower() == '.pdf':
+                tekshirish(soato4, inn, xat_turi, hisobot_turi, yil, aniqlangan_sana, xat_sanasi, fayl_nomi)
+        return super().form_valid(form)
 
 def JarimaQilinmagan(request):
     # Jarima qilinmagan korxonalarni ko'rsatish
@@ -290,7 +315,7 @@ class DalolatnomaUpdateView(UpdateView):
 
 
 
-def dalolatnoma_from_excelupload(request, excel_id):
+def dalolatnoma_from_excelupload1(request, excel_id):
     excelupload = get_object_or_404(Excelupload, id=excel_id)
     initial_data = {
         'okpo': excelupload.okpo,
@@ -305,7 +330,6 @@ def dalolatnoma_from_excelupload(request, excel_id):
             dalolatnoma = form.save(commit=False)
             dalolatnoma.user = request.user
             dalolatnoma.save()
-            # Optionally: Excelupload holatini yangilash
             excelupload.dalolatnomasi_mavjudligi = True
             excelupload.save()
             return redirect('dalolatnoma_list')
@@ -342,7 +366,7 @@ def dalolatnoma_from_excelupload(request, excel_id):
 
 
 def dalolatnoma_list(request):
-    tabl = Dalolatnoma.objects.all().order_by('-id')  # tasdiqlanmagan va faoliyatsiz bo'lmaganlar
+    tabl = Dalolatnoma.objects.all().order_by('-id')  
     if request.method == 'POST':
         record_id = request.POST.get('record_id')
         pdf_file = request.FILES
@@ -366,3 +390,7 @@ def dalolatnoma_list(request):
             'form': DalolatnomaForm(instance=rec)
         })
     return render(request, 'ish/dalolatnoma_list.html', {'record_forms': record_forms, 'ruyxat': tabl})
+
+
+
+

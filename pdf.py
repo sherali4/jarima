@@ -74,11 +74,6 @@ for obj in decoded_objects:
 
 
 
-
-
-
-
-
 if matn_topildi:
     print("✅ '11' raqami matnda mavjud.")
 else:

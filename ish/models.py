@@ -59,6 +59,8 @@ class Excelupload(models.Model):
     dalolatnomasi_mavjudligi = models.BooleanField(default=False)
     nazoratdan_chiqarilgan = models.BooleanField(default=False)
     izoh = models.TextField(null=True, blank=True)
+    tekshirish_natijasi = models.TextField(null=True, blank=True)
+
 
     def save(self, *args, **kwargs):
         if self.tasdiqlangan and not self.tasdiqlangan_vaqt:
@@ -69,6 +71,11 @@ class Excelupload(models.Model):
 
     def __str__(self):
         return super().__str__()
+    class Meta:
+        db_table = ''
+        managed = True
+        verbose_name = 'korxona'
+        verbose_name_plural = 'korxonalar'
     
     # def __str__(self):
         # return f"Excel fayli: {self.file.name} (Yuklangan: {self.uploaded_at})"
@@ -89,7 +96,6 @@ class Hisobotdavri(models.Model):
 
 class CustomUser(AbstractUser):
     telefon = models.CharField(max_length=20, blank=True, null=True)
-    yosh = models.PositiveIntegerField(blank=True, null=True)
     soato = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
