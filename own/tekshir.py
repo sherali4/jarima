@@ -1,10 +1,13 @@
 import re
 from PyPDF2 import PdfReader
+from django.shortcuts import get_object_or_404
 from pdf2image import convert_from_path
 from pyzbar.pyzbar import decode
 from PIL import Image
 import warnings
 from datetime import datetime
+
+from ish.models import Excelupload
 
 def tekshirish(soato4, inn, xat_turi, hisobot_turi, yil, aniqlangan_sana, xat_sanasi, fayl_nomi):
 
@@ -17,7 +20,6 @@ def tekshirish(soato4, inn, xat_turi, hisobot_turi, yil, aniqlangan_sana, xat_sa
        'aniqlangan_sana': "10.06.2025",
        'xat_sanasi': "09.06.2025",
        fayl nomi = xat.pdf
-
     '''
     #kelayotgan ma'lumotlar
     mavjud = {
@@ -51,8 +53,6 @@ def tekshirish(soato4, inn, xat_turi, hisobot_turi, yil, aniqlangan_sana, xat_sa
     else:
         xat_turi = r"ko.*?rsatma.*?xat"
 
-
-
     if mavjud['hisobot_turi'] == "1-korxona":
         hisobot_turi = r'1\s*-\s*?korxona|1\s*korxona'
     elif mavjud['hisobot_turi'] == "12-korxona":
@@ -63,7 +63,6 @@ def tekshirish(soato4, inn, xat_turi, hisobot_turi, yil, aniqlangan_sana, xat_sa
         hisobot_turi = r'12\s*-\s*?moliya|12\s*moliya'
     else:
         hisobot_turi = r'fermer'
-
 
     hududlar_nomi = {
         '1703': 'Andijon',
@@ -122,7 +121,6 @@ def tekshirish(soato4, inn, xat_turi, hisobot_turi, yil, aniqlangan_sana, xat_sa
     if text and str(mavjud['yil']) in text:
         baza['yil'] = True
 
-
     xat_sanasi = '01.01.2000'
 
     pattern = r'.*?(\d{2}).*?\s+(yanvar|fevral|mart|aprel|may|iyun|iyul|avgust|sentyabr|oktyabr|noyabr|dekabr)\s+(\d{4})-y\.'
@@ -142,34 +140,22 @@ def tekshirish(soato4, inn, xat_turi, hisobot_turi, yil, aniqlangan_sana, xat_sa
     #######################################
 
     aniqlangan_sana = mavjud['aniqlangan_sana']
-
-
     aniqlangan_sana_dt = datetime.strptime(aniqlangan_sana, "%d.%m.%Y")
     xat_sanasi_dt = datetime.strptime(xat_sanasi, "%d.%m.%Y")
 
     # Taqqoslash
     if xat_sanasi_dt >= aniqlangan_sana_dt:
         baza['aniqlangan_sana'] = True
-
-
     #######################################################
-
-
     boshliq_shablon = r"boshqarma.*?boshlig.*?i"
     if text:
         matches = re.findall(boshliq_shablon, text, re.IGNORECASE)
         for match in matches:
             baza['boshqarma_boshligi']=True
-
     ########################QRCODE##############################################
-
-    # Poppler yo‘li (PATHga qo‘shmasdan ishlatamiz)
     poppler_path = r"D:\project\jarima\poppler\Library\bin"  # Sizda qayerga ochilgan bo‘lsa, shuni yozing
-
-    # PDF fayl manzili
     pdf_fayl = "xat.pdf"
 
-    # Rasmga aylantirish (poppler_path orqali)
     sahifalar = convert_from_path(pdf_fayl, poppler_path=poppler_path)
 
     qr_topildi = False
@@ -189,11 +175,12 @@ def tekshirish(soato4, inn, xat_turi, hisobot_turi, yil, aniqlangan_sana, xat_sa
     if not qr_topildi:
         pass
         #print("QR-kod hujjatda topilmadi.")
-
     ########################################################
 
     print(f'inn= {inn}')
     for kalit, qiymat in baza.items():
+        #post = get_object_or_404(Excelupload, pk=request.POST['id'])
+
         if not qiymat:
             print(f"❌ {kalit} topilmadi.")
     return baza

@@ -26,10 +26,8 @@ SECRET_KEY = "django-insecure-b)oq&wi#zgdll*aq(6ece7^_crd*r)%61dx1x=-$ss57-%fr@6
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = []
 
-
-# Application definition
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -39,10 +37,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "ish",
-    "social_django",
-    "widget_tweaks",  # widget_tweaks qo'shilgan
-    'crispy_forms',  # crispy_forms qo'shilgan
-    'crispy_bootstrap5',  # crispy_forms uchun bootstrap5 qo'shilgan
+    "widget_tweaks",  
+    'crispy_forms',  
+    'crispy_bootstrap5',  
 ]
 
 MIDDLEWARE = [
@@ -53,10 +50,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "social_django.middleware.SocialAuthExceptionMiddleware",
 ]
-
-
 
 ROOT_URLCONF = "kb.urls"
 
@@ -70,8 +64,6 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "social_django.context_processors.backends",  # BU QATOR KERAK
-                "social_django.context_processors.login_redirect",  # BU QATOR HAM KERAK
             ],
         },
     },
@@ -90,7 +82,6 @@ DATABASES = {
     }
 }
 
-# qo'shimcha sozlamalar
 # https://docs.djangoproject.com/en/5.2/ref/settings/#static-files
 
 MEDIA_URL = '/media/'
@@ -99,19 +90,18 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
 
 AUTHENTICATION_BACKENDS = (
-    'social_core.backends.google.GoogleOAuth2',
     'django.contrib.auth.backends.ModelBackend',
 )
 LOGIN_URL = 'login'
 LOGOUT_URL = 'logout'
-LOGIN_REDIRECT_URL = '/'  # Login muvaffaqiyatli bo‘lsa – bu manzilga yo‘naltiriladi
+LOGIN_REDIRECT_URL = '/'  
 
 AUTH_USER_MODEL = 'ish.CustomUser'
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = ["bootstrap5"]
-CRISPY_TEMPLATE_PACK = 'bootstrap5'  # crispy_forms uchun shablon to'plami
+CRISPY_TEMPLATE_PACK = 'bootstrap5'  
 
-# Password validation
+
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -135,14 +125,12 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "uz"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Tashkent"
 
 USE_I18N = True
 
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
