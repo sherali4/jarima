@@ -1,0 +1,22 @@
+{% extends 'ish/base.html' %}
+{% load widget_tweaks %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2>Fayl Yuklash</h2>
+    <form method="post" class='form form-control' enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="my_file" required>
+        <button type="submit">Yuklash</button>
+    </form>
+
+    {% if messages %}
+      {% for message in messages %}
+        <p style="color: green;">{{ message }}</p>
+      {% endfor %}
+    {% endif %}
+
+
+</div>
+{% endblock %}

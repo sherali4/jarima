@@ -1,4 +1,7 @@
 from datetime import datetime
+import io
+import json
+from django.conf import settings
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -14,6 +17,11 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from own.tekshir import tekshirish
 import os
+from .forms import FoydalanuvchiRoyxatForm
+from PyPDF2 import PdfReader, PdfWriter
+from io import BytesIO
+from PIL import Image
+
 
 
 viloyat = ['1703', '1706', '1708', '1710', '1712', '1714', '1718', '1722', '1724', '1726', '1727', '1730', '1733']
@@ -38,11 +46,10 @@ def index(request):
 
     context = {
         'topshiriqlar': topshiriqlar,
-        #'progress': progress,
-    }
+        }
     return render(request, 'ish/index.html', context)
 
-from .forms import FoydalanuvchiRoyxatForm
+
 
 def signup_view1(request):
     if request.method == 'POST':
@@ -94,7 +101,6 @@ def topshiriq_create_view(request):
         form = TopshiriqForm()
     return render(request, 'ish/topshiriq_create.html', {'form': form, 'xodimlar': xodimlar})
 def jarima(request):
-    # Jarima sahifasini ko'rsatish
     return render(request, 'ish/jarima.html')
 
 @login_required
@@ -194,7 +200,7 @@ def excelupload_list(request):
     else:
         form = None
 
-    records = Excelupload.objects.all().order_by('-aniqlangan_sanasi')  # so‘nggi yuklanganlar birinchi
+    records = Excelupload.objects.all().order_by('-aniqlangan_sanasi') 
 
     record_forms = []
     for rec in records:
@@ -213,28 +219,11 @@ def item_detail1(request, id):
     return render(request, 'ish/item_detail.html', context=context)
 
 
-class KorxonaUpdateVie1w(UpdateView):
-    model = Excelupload
-    fields = ['xat_sanasi', 'pdf_fayli']  # Qaysi maydonlar tahrirlanadi
-    template_name = 'ish/item_detail.html'  # BU YER MUHIM
-    success_url = reverse_lazy('excelupload_list')  # Forma muvaffaqiyatli topshirilganda qayerga yo‘naltirish
-
-    def dispatch(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        if request.user.soato == '1700':
-            pass
-        elif self.object.soato[:4] != request.user.soato:
-            return HttpResponseForbidden("Siz bu ma'lumotni tahrirlay olmaysiz.")
-        return super().dispatch(request, *args, **kwargs)
-
-
-
-
 class KorxonaUpdateView(UpdateView):
     model = Excelupload
     fields = ['xat_sanasi', 'pdf_fayli']  
     template_name = 'ish/item_detail.html'  
-    success_url = reverse_lazy('index')  # Forma muvaffaqiyatli topshirilganda qayerga yo‘naltirish
+    success_url = reverse_lazy('excelupload_list')  # Forma muvaffaqiyatli topshirilganda qayerga yo‘naltirish
     def form_valid(self, form):
         instance = form.save(commit=False)
         soato4 = instance.soato[:4]
@@ -246,27 +235,87 @@ class KorxonaUpdateView(UpdateView):
         xat_sanasi = form.cleaned_data['xat_sanasi']
         xat_sanasi = datetime.strptime(str(form.cleaned_data['xat_sanasi']), "%Y-%m-%d").strftime("%d.%m.%Y")
         fayl_nomi = form.cleaned_data['pdf_fayli']
-
+        json_str = ''
         if fayl_nomi:
-            kengaytma = os.path.splitext(fayl_nomi.name)[1]  # .pdf kabi natija
+            kengaytma = os.path.splitext(fayl_nomi.name)[1]  
             if kengaytma.lower() == '.pdf':
-                tekshirish(soato4, inn, xat_turi, hisobot_turi, yil, aniqlangan_sana, xat_sanasi, fayl_nomi)
+                
+                tekshirish_natijasi = tekshirish(soato4, inn, xat_turi, hisobot_turi, yil, aniqlangan_sana, xat_sanasi, fayl_nomi)
+                json_str = json.dumps(tekshirish_natijasi, indent=4)
+                #original_dict = json.loads(json_str) ortga qaytarish
+            elif kengaytma.lower() in ['.jpg', '.jpeg', '.png']:
+                image = Image.open(fayl_nomi)
+                if image.mode in ("RGBA", "P"):
+                    image = image.convert("RGB")
+                buffer = io.BytesIO()
+                image.save(buffer, format="PDF")
+                buffer.seek(0)
+                from django.http import FileResponse
+                #image = FileResponse(buffer, as_attachment=True, filename="natija.pdf")
+                tekshirish_natijasi = tekshirish(soato4, inn, xat_turi, hisobot_turi, yil, aniqlangan_sana, xat_sanasi, buffer)
+            json_str = json.dumps(tekshirish_natijasi, indent=4)
+
+   
+        instance.tekshirish_natijasi = json_str
+        messages.info(self.request, f'{inn} {hisobot_turi} {xat_turi} {aniqlangan_sana}')
+        messages.success(self.request, "pdf fayl muvaffaqiyatli yangilandi.")
+        #messages.warning(self.request, "pdf fayl muvaffaqiyatli yangilandi.")
         return super().form_valid(form)
 
 def JarimaQilinmagan(request):
-    # Jarima qilinmagan korxonalarni ko'rsatish
     jarima_qilinmagan = Excelupload.objects.filter(faoliyatsiz=False, xat_turi='chaqiriq').order_by('-aniqlangan_sanasi')
     return render(request, 'ish/jarima_qilinmagan.html', {'ruyxat': jarima_qilinmagan})
 
+
+def parse_pdf(request):
+    if request.method == 'POST' and request.FILES.get('my_file'):
+        uploaded_file = request.FILES['my_file']
+        kengaytma = os.path.splitext(uploaded_file.name)[1]
+
+        if kengaytma.lower() == '.pdf':
+            # Faylni xotiraga yozamiz
+            temp_file = BytesIO()
+            for chunk in uploaded_file.chunks():
+                temp_file.write(chunk)
+            temp_file.seek(0)
+
+            # PDF-ni o‘qish
+            reader = PdfReader(temp_file)
+            pages_count = len(reader.pages)
+
+            split_pdfs = []
+
+            # Har bir sahifa uchun yangi PDF fayl yaratish
+            for i in range(pages_count):
+                writer = PdfWriter()
+                writer.add_page(reader.pages[i])
+                output = BytesIO()
+                writer.write(output)
+                output.seek(0)
+                split_pdfs.append((f'sahifa_{i+1}.pdf', output.read()))
+
+            # ZIP ichida barcha sahifalarni qaytarish (agar kerak bo‘lsa)
+            import zipfile
+            zip_buffer = BytesIO()
+            with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+                for name, data in split_pdfs:
+                    zip_file.writestr(name, data)
+
+            zip_buffer.seek(0)
+            response = HttpResponse(zip_buffer, content_type='application/zip')
+            response['Content-Disposition'] = 'attachment; filename=split_pages.zip'
+            return response
+
+        return render(request, 'ish/parse_pdf.html', {'error': 'Faqat PDF fayl qabul qilinadi.'})
+
+    return render(request, 'ish/parse_pdf.html')
+
+
 def Exceluploadtoexcel(request):
-    # Excel faylini yuklash
     workbook = openpyxl.Workbook()
     sheet = workbook.active
     sheet.title = 'Jarima baza'
-
-    
     sheet.append(['OKPO', 'INN', 'SOATO', 'Nomi', 'Sababi', 'OPF', 'Hisobot Nomi', 'Hisobot Davri', 'Faoliyatsiz', 'Xat Turi', 'Xat Sanasi', 'Aniqlangan Sanasi'])
-
     uploads = Excelupload.objects.all()
     if not uploads:
         messages.error(request, "Hozirda yuklangan ma'lumotlar mavjud emas.")
@@ -295,8 +344,6 @@ def Exceluploadtoexcel(request):
     response['Content-Disposition'] = 'attachment; filename=jarima_baza.xlsx'
     workbook.save(response)
     return response
-
-
 
 class DalolatnomaUpdateView(UpdateView):
     model = Dalolatnoma
@@ -337,7 +384,6 @@ def dalolatnoma_from_excelupload1(request, excel_id):
         form = DalolatnomaForm(initial=initial_data)
 
     return render(request, 'ish/from_excel.html', {'form': form, 'excel': excelupload})
-
 
 
 def dalolatnoma_from_excelupload(request, excel_id):
@@ -390,7 +436,3 @@ def dalolatnoma_list(request):
             'form': DalolatnomaForm(instance=rec)
         })
     return render(request, 'ish/dalolatnoma_list.html', {'record_forms': record_forms, 'ruyxat': tabl})
-
-
-
-

@@ -26,6 +26,12 @@ urlpatterns = [
     path('jarima/excel/download/', views.Exceluploadtoexcel, name='excel_download'),
     path('jarima/dalolatnoma/<int:pk>/', views.DalolatnomaUpdateView.as_view(), name='dalolatnoma_update'),
     path('jarima/dalolatnoma/from-excel/<int:excel_id>/', views.dalolatnoma_from_excelupload, name='dalolatnoma_from_excel'),
+    path('tools/parse_pdf/', views.parse_pdf, name='parse_pdf'),
+
+    
+
+
+
 
     path('', views.index, name='index'),
     ]
