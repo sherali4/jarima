@@ -80,6 +80,7 @@ def tekshirish(soato4, inn, xat_turi, hisobot_turi, yil, aniqlangan_sana, xat_sa
         '1735': 'Qoraqalpog‘iston Respublikasi',
         '1726': 'Toshkent shahar',
     }
+    
     hududlar_nomi = {k: v.lower() for k, v in hududlar_nomi.items()}
 
     baza = {

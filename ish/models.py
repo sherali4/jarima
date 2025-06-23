@@ -6,7 +6,6 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 
-# Create your models here.
 class Xodim(models.Model):
     ism = models.CharField(max_length=100)
     familiya = models.CharField(max_length=100)
@@ -69,6 +68,7 @@ class Excelupload(models.Model):
             self.tasdiqlangan_vaqt = None
         super().save(*args, **kwargs)
 
+
     def __str__(self):
         return super().__str__()
     class Meta:
@@ -113,11 +113,11 @@ class Dalolatnoma(models.Model):
     dalolatnoma_fayli = models.FileField(upload_to='dalolatnomalar/', null=True, blank=True)
     tasdiqlangan = models.BooleanField(default=False)
     tasdiqlangan_vaqti = models.DateTimeField(null=True, blank=True)  # remove auto_now_add
+
     class Meta:
         verbose_name = 'Dalolatnoma'
         verbose_name_plural = 'Dalolatnomalar'
         ordering = ['-yaratilgan_vaqti']
-    
 
     def __str__(self):
         return f"{self.okpo}-{self.inn} ({self.soato4})"

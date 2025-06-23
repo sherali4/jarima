@@ -83,9 +83,6 @@ def logout_view(request):
     return redirect('login')
 
 
-
-
-
 def topshiriq_create_view(request):
     xodimlar = Xodim.objects.all()
     # Xodimlar ro'yxatini shablonga uzatish
@@ -113,7 +110,7 @@ def upload_excel(request):
             hisobotdavri = form.cleaned_data.get('hisobot_davri') # Hisobot davrini olish
             
             excel_file = request.FILES['file']
-
+            kerakli_ustunlar = {'okpo', 'inn', 'soato', 'nomi', 'sababi', 'opf'}
             # Faylni .xlsx ekanligiga tekshiruv
             if not excel_file.name.endswith('.xlsx'):
                 messages.error(request, "Faqat .xlsx formatdagi fayllar qabul qilinadi.")
@@ -124,6 +121,13 @@ def upload_excel(request):
             except Exception as e:
                 messages.error(request, f"Faylni o'qishda xatolik: {e}")
                 return redirect('upload_excel')
+            fayldagi_ustunlar = set(df.columns)
+            yetishmayotgan = kerakli_ustunlar - fayldagi_ustunlar
+
+            if yetishmayotgan:
+                messages.error(request, f"Faylda quyidagi ustunlar yetishmayapti: {', '.join(yetishmayotgan)}")
+                return redirect('upload_excel')
+            df = df[list(kerakli_ustunlar)]  # faqat kerakli ustunlarni olish
 
             # Har bir qatordagi ma'lumotni saqlash
             for _, row in df.iterrows():
@@ -132,9 +136,9 @@ def upload_excel(request):
 
                 # BAZADAN TEKSHIRUV: ushbu okpo va inn mavjudmi?
                 #mavjud = Excelupload.objects.filter(okpo=okpo_val, inn=inn_val).exists()
-                
-                mavjud = Excelupload.objects.filter(okpo=okpo_val, inn=inn_val, hisobot_nomi=hisobot, xat_turi = "ko'rsatma", faoliyatsiz =False, dalolatnomasi_mavjudligi = False).exists()
-                sudga_xat = Excelupload.objects.filter(okpo=okpo_val, inn=inn_val, hisobot_nomi=hisobot, xat_turi = "chaqiriq", faoliyatsiz =False, dalolatnomasi_mavjudligi = False).exists()
+                opf1 = row.get('opf')[:1]
+                mavjud = Excelupload.objects.filter(okpo=okpo_val, inn=inn_val, hisobot_nomi=hisobot, xat_turi = "ko'rsatma", faoliyatsiz =False, dalolatnomasi_mavjudligi = False, opf__startswith=f'{opf1}').exists()
+                sudga_xat = Excelupload.objects.filter(okpo=okpo_val, inn=inn_val, hisobot_nomi=hisobot, xat_turi = "chaqiriq", faoliyatsiz =False, dalolatnomasi_mavjudligi = False, opf__startswith=f'{opf1}').exists()
                 if mavjud and not sudga_xat:
                     xat_turi = 'chaqiriq'
                 elif sudga_xat:
@@ -159,8 +163,6 @@ def upload_excel(request):
                     dalolatnomasi_mavjudligi=True if dalolatnoma_mavjud else False,                                        
                 )
                 
-
-
             messages.success(request, "Fayl muvaffaqiyatli yuklandi va ma'lumotlar saqlandi.")
             return redirect('upload_excel')
         else:
@@ -436,3 +438,6 @@ def dalolatnoma_list(request):
             'form': DalolatnomaForm(instance=rec)
         })
     return render(request, 'ish/dalolatnoma_list.html', {'record_forms': record_forms, 'ruyxat': tabl})
+
+
+
