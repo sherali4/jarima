@@ -107,7 +107,7 @@ def upload_excel(request):
         # Formani tekshirish
         if form.is_valid():
             hisobot = form.cleaned_data.get('hisobot') # Hisobot turini olish
-            hisobotdavri = form.cleaned_data.get('hisobot_davri') # Hisobot davrini olish
+            hisobot_davri = form.cleaned_data.get('hisobot_davri') # Hisobot davrini olish
             
             excel_file = request.FILES['file']
             kerakli_ustunlar = {'okpo', 'inn', 'soato', 'nomi', 'sababi', 'opf'}
@@ -136,23 +136,34 @@ def upload_excel(request):
 
                 # BAZADAN TEKSHIRUV: ushbu okpo va inn mavjudmi?
                 #mavjud = Excelupload.objects.filter(okpo=okpo_val, inn=inn_val).exists()
-                opf1 = row.get('opf')[:1]
+                opf1 = str(row.get('opf'))[:1]
                 mavjud = Excelupload.objects.filter(okpo=okpo_val, inn=inn_val, hisobot_nomi=hisobot, xat_turi = "ko'rsatma", faoliyatsiz =False, dalolatnomasi_mavjudligi = False, opf__startswith=f'{opf1}').exists()
                 sudga_xat = Excelupload.objects.filter(okpo=okpo_val, inn=inn_val, hisobot_nomi=hisobot, xat_turi = "chaqiriq", faoliyatsiz =False, dalolatnomasi_mavjudligi = False, opf__startswith=f'{opf1}').exists()
+                dublikat = Excelupload.objects.filter(okpo=row.get('okpo'), inn=row.get('inn'), hisobot_nomi=hisobot, hisobot_davri=hisobot_davri).exists()
+                           
                 if mavjud and not sudga_xat:
                     xat_turi = 'chaqiriq'
+                    xat_turi2 = 'sudga xat'
                 elif sudga_xat:
                     xat_turi = 'sudga xat'
+                    xat_turi2 = 'sudga xat'
                 else:
                     xat_turi = 'ko\'rsatma'
-                soato4=str(row.get('soato'))[:4]
-                # agar dalolatnoma mavjud bo'lsa, xat turi 'dalolatnoma' bo'ladi
-                dalolatnoma_mavjud = Dalolatnoma.objects.filter(okpo=okpo_val, inn=inn_val, soato4=soato4).exists()
+                    xat_turi2 = 'chaqiriq'
+                    
+                    
+                if str(row.get('opf'))[:1] == '2':
+                    xat_turi = xat_turi2
                 
+                soato4=str(row.get('soato'))[:4]
+                dalolatnoma_mavjud = Dalolatnoma.objects.filter(okpo=okpo_val, inn=inn_val, soato4=soato4).exists()
+                if dublikat:
+                    continue
+            
 
                 Excelupload.objects.create(
                     hisobot_nomi=hisobot,
-                    hisobot_davri=hisobotdavri,
+                    hisobot_davri=hisobot_davri,
                     okpo=row.get('okpo', ''),
                     inn=row.get('inn', ''),
                     soato=row.get('soato', ''),
@@ -162,7 +173,7 @@ def upload_excel(request):
                     xat_turi=xat_turi,
                     dalolatnomasi_mavjudligi=True if dalolatnoma_mavjud else False,                                        
                 )
-                
+            
             messages.success(request, "Fayl muvaffaqiyatli yuklandi va ma'lumotlar saqlandi.")
             return redirect('upload_excel')
         else:
