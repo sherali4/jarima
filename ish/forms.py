@@ -4,8 +4,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import Dalolatnoma, Hisobot, Topshiriq, Excelupload, Hisobotdavri
-
-
+from .models import CustomUser
 
 
 class FoydalanuvchiRoyxatForm(UserCreationForm):
@@ -17,7 +16,6 @@ class FoydalanuvchiRoyxatForm(UserCreationForm):
             'password1': 'Parol',
             'password2': 'Parolni tasdiqlang',
         }
-
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -31,10 +29,6 @@ class FoydalanuvchiRoyxatForm(UserCreationForm):
         self.fields['password2'].help_text = "Tekshirish uchun parolni qayta kiriting."
 
 
-
-
-from django.contrib.auth.forms import UserCreationForm
-from .models import CustomUser
 
 class CustomUserForm(UserCreationForm):
     class Meta:

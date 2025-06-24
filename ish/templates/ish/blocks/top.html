@@ -1,11 +1,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container-fluid">
       <a class="navbar-brand" href="{% url 'index' %}">Tadbirkorlik statistikasi</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
-              data-bs-target="#navbarContent" aria-controls="navbarContent" 
-              aria-expanded="false" aria-label="Navigatsiyani ochish">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+     
   
       <div class="collapse navbar-collapse" id="navbarContent">
         <ul class="navbar-nav ms-auto">
@@ -14,6 +10,9 @@
           </li>
           <li class="nav-item">
             <a class="nav-link {% if "/jarima" in request.path %}active{% endif %}" href="{% url "excelupload_list" %}">Jarima</a>
+          </li>
+          <li class="nav-item">
+          <a class="nav-link {% if "/tools/parse_pdf" in request.path %}active{% endif %}" href="{% url "parse_pdf" %}">Tools</a>
           </li>
           <li class="nav-item">
              {% if user.is_authenticated %}

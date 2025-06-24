@@ -1,5 +1,7 @@
 from datetime import datetime
+import io
 import json
+from django.conf import settings
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -16,6 +18,11 @@ from django.contrib.auth.decorators import login_required
 from own.tekshir import tekshirish
 import os
 from .forms import FoydalanuvchiRoyxatForm
+from PyPDF2 import PdfReader, PdfWriter
+from io import BytesIO
+from PIL import Image
+
+
 
 viloyat = ['1703', '1706', '1708', '1710', '1712', '1714', '1718', '1722', '1724', '1726', '1727', '1730', '1733']
 tuman = ['1710207', '1710212', '1710220', '1710224', '1710229', '1710232', '1710233', '1710234', '1710235', '1710237', '1710242', '1710245', '1710250', '1710401']
@@ -39,8 +46,7 @@ def index(request):
 
     context = {
         'topshiriqlar': topshiriqlar,
-        #'progress': progress,
-    }
+        }
     return render(request, 'ish/index.html', context)
 
 
@@ -77,9 +83,6 @@ def logout_view(request):
     return redirect('login')
 
 
-
-
-
 def topshiriq_create_view(request):
     xodimlar = Xodim.objects.all()
     # Xodimlar ro'yxatini shablonga uzatish
@@ -104,10 +107,10 @@ def upload_excel(request):
         # Formani tekshirish
         if form.is_valid():
             hisobot = form.cleaned_data.get('hisobot') # Hisobot turini olish
-            hisobotdavri = form.cleaned_data.get('hisobot_davri') # Hisobot davrini olish
+            hisobot_davri = form.cleaned_data.get('hisobot_davri') # Hisobot davrini olish
             
             excel_file = request.FILES['file']
-
+            kerakli_ustunlar = {'okpo', 'inn', 'soato', 'nomi', 'sababi', 'opf'}
             # Faylni .xlsx ekanligiga tekshiruv
             if not excel_file.name.endswith('.xlsx'):
                 messages.error(request, "Faqat .xlsx formatdagi fayllar qabul qilinadi.")
@@ -118,6 +121,13 @@ def upload_excel(request):
             except Exception as e:
                 messages.error(request, f"Faylni o'qishda xatolik: {e}")
                 return redirect('upload_excel')
+            fayldagi_ustunlar = set(df.columns)
+            yetishmayotgan = kerakli_ustunlar - fayldagi_ustunlar
+
+            if yetishmayotgan:
+                messages.error(request, f"Faylda quyidagi ustunlar yetishmayapti: {', '.join(yetishmayotgan)}")
+                return redirect('upload_excel')
+            df = df[list(kerakli_ustunlar)]  # faqat kerakli ustunlarni olish
 
             # Har bir qatordagi ma'lumotni saqlash
             for _, row in df.iterrows():
@@ -126,23 +136,32 @@ def upload_excel(request):
 
                 # BAZADAN TEKSHIRUV: ushbu okpo va inn mavjudmi?
                 #mavjud = Excelupload.objects.filter(okpo=okpo_val, inn=inn_val).exists()
-                
-                mavjud = Excelupload.objects.filter(okpo=okpo_val, inn=inn_val, hisobot_nomi=hisobot, xat_turi = "ko'rsatma", faoliyatsiz =False, dalolatnomasi_mavjudligi = False).exists()
-                sudga_xat = Excelupload.objects.filter(okpo=okpo_val, inn=inn_val, hisobot_nomi=hisobot, xat_turi = "chaqiriq", faoliyatsiz =False, dalolatnomasi_mavjudligi = False).exists()
+                opf1 = str(row.get('opf'))[:1]
+                mavjud = Excelupload.objects.filter(okpo=okpo_val, inn=inn_val, hisobot_nomi=hisobot, xat_turi = "ko'rsatma", faoliyatsiz =False, dalolatnomasi_mavjudligi = False, opf__startswith=f'{opf1}').exists()
+                sudga_xat = Excelupload.objects.filter(okpo=okpo_val, inn=inn_val, hisobot_nomi=hisobot, xat_turi = "chaqiriq", faoliyatsiz =False, dalolatnomasi_mavjudligi = False, opf__startswith=f'{opf1}').exists()
+                dublikat = Excelupload.objects.filter(okpo=row.get('okpo'), inn=row.get('inn'), hisobot_nomi=hisobot, hisobot_davri=hisobot_davri).exists()
+                           
                 if mavjud and not sudga_xat:
                     xat_turi = 'chaqiriq'
+                    xat_turi2 = 'sudga xat'
                 elif sudga_xat:
                     xat_turi = 'sudga xat'
+                    xat_turi2 = 'sudga xat'
                 else:
                     xat_turi = 'ko\'rsatma'
-                soato4=str(row.get('soato'))[:4]
-                # agar dalolatnoma mavjud bo'lsa, xat turi 'dalolatnoma' bo'ladi
-                dalolatnoma_mavjud = Dalolatnoma.objects.filter(okpo=okpo_val, inn=inn_val, soato4=soato4).exists()
+                    xat_turi2 = 'chaqiriq'
+                    
+                    
+                if str(row.get('opf'))[:1] == '2':
+                    xat_turi = xat_turi2
                 
-
+                soato4=str(row.get('soato'))[:4]
+                dalolatnoma_mavjud = Dalolatnoma.objects.filter(okpo=okpo_val, inn=inn_val, soato4=soato4).exists()
+                if dublikat:
+                    continue
                 Excelupload.objects.create(
                     hisobot_nomi=hisobot,
-                    hisobot_davri=hisobotdavri,
+                    hisobot_davri=hisobot_davri,
                     okpo=row.get('okpo', ''),
                     inn=row.get('inn', ''),
                     soato=row.get('soato', ''),
@@ -152,9 +171,7 @@ def upload_excel(request):
                     xat_turi=xat_turi,
                     dalolatnomasi_mavjudligi=True if dalolatnoma_mavjud else False,                                        
                 )
-                
-
-
+            
             messages.success(request, "Fayl muvaffaqiyatli yuklandi va ma'lumotlar saqlandi.")
             return redirect('upload_excel')
         else:
@@ -175,7 +192,9 @@ def excelupload_listp(request):
     return render(request, 'ish/excelupload_list.html', {'uploads': uploads})
 @login_required
 def excelupload_list(request):
-    if len(request.user.soato) == 4 and request.user.soato in viloyat:
+    soato = str(request.user.soato) if request.user.soato else ""
+
+    if len(soato) == 4 and soato in viloyat:
         tabl = Excelupload.objects.filter(faoliyatsiz=False).filter(tasdiqlangan=False).exclude(xat_turi="sudga xat").filter(soato__startswith = request.user.soato).order_by('-aniqlangan_sanasi')  
     else:
         tabl = Excelupload.objects.filter(faoliyatsiz=False).filter(tasdiqlangan=False).exclude(xat_turi="sudga xat").order_by('-aniqlangan_sanasi')  
@@ -218,35 +237,150 @@ class KorxonaUpdateView(UpdateView):
     fields = ['xat_sanasi', 'pdf_fayli']  
     template_name = 'ish/item_detail.html'  
     success_url = reverse_lazy('excelupload_list')  # Forma muvaffaqiyatli topshirilganda qayerga yo‘naltirish
-    def form_valid(self, form):
+    
+    
+    def form_valid1(self, form):
         instance = form.save(commit=False)
         soato4 = instance.soato[:4]
         inn = instance.inn
         xat_turi = instance.xat_turi
         hisobot_turi = instance.hisobot_nomi
         yil = str(instance.xat_sanasi)[:4]
-        aniqlangan_sana = datetime.strptime(str(instance.aniqlangan_sanasi), "%Y-%m-%d").strftime("%d.%m.%Y")
-        xat_sanasi = form.cleaned_data['xat_sanasi']
-        xat_sanasi = datetime.strptime(str(form.cleaned_data['xat_sanasi']), "%Y-%m-%d").strftime("%d.%m.%Y")
+        #aniqlangan_sana = datetime.strptime(str(instance.aniqlangan_sanasi), "%Y-%m-%d").strftime("%d.%m.%Y")
+        aniqlangan_raw = instance.aniqlangan_sanasi
+        if aniqlangan_raw:
+            aniqlangan_sana = aniqlangan_raw.strftime("%d.%m.%Y")
+        else:
+            aniqlangan_sana = ""
+        #xat_sanasi = form.cleaned_data['xat_sanasi']
+        #xat_sanasi = datetime.strptime(str(form.cleaned_data['xat_sanasi']), "%Y-%m-%d").strftime("%d.%m.%Y")
+        xat_sanasi_raw = form.cleaned_data.get('xat_sanasi')
+        if xat_sanasi_raw:
+            xat_sanasi = xat_sanasi_raw.strftime("%d.%m.%Y")
+        else:
+            xat_sanasi = ""
+
+
         fayl_nomi = form.cleaned_data['pdf_fayli']
-        tekshirish_natijasi = ''
+        json_str = ''
         if fayl_nomi:
             kengaytma = os.path.splitext(fayl_nomi.name)[1]  
             if kengaytma.lower() == '.pdf':
+                
                 tekshirish_natijasi = tekshirish(soato4, inn, xat_turi, hisobot_turi, yil, aniqlangan_sana, xat_sanasi, fayl_nomi)
-                #print(tekshirish_natijasi)
                 json_str = json.dumps(tekshirish_natijasi, indent=4)
-                #print(json_str)
                 #original_dict = json.loads(json_str) ortga qaytarish
+            elif kengaytma.lower() in ['.jpg', '.jpeg', '.png']:
+                image = Image.open(fayl_nomi)
+                if image.mode in ("RGBA", "P"):
+                    image = image.convert("RGB")
+                buffer = io.BytesIO()
+                image.save(buffer, format="PDF")
+                buffer.seek(0)
+                from django.http import FileResponse
+                #image = FileResponse(buffer, as_attachment=True, filename="natija.pdf")
+                tekshirish_natijasi = tekshirish(soato4, inn, xat_turi, hisobot_turi, yil, aniqlangan_sana, xat_sanasi, buffer)
+            json_str = json.dumps(tekshirish_natijasi, indent=4)
+
+   
         instance.tekshirish_natijasi = json_str
-        messages.info(self.request, '11111 korxonasi bo\'yicha pdf fayl yangilandi')
+        messages.info(self.request, f'{inn} {hisobot_turi} {xat_turi} {aniqlangan_sana}')
         messages.success(self.request, "pdf fayl muvaffaqiyatli yangilandi.")
-        messages.warning(self.request, "pdf fayl muvaffaqiyatli yangilandi.")
+        #messages.warning(self.request, "pdf fayl muvaffaqiyatli yangilandi.")
         return super().form_valid(form)
+    
+    
+    def form_valid(self, form):
+        instance = form.save(commit=False)
+        soato4 = instance.soato[:4]
+        inn = instance.inn
+        xat_turi = instance.xat_turi
+        hisobot_turi = instance.hisobot_nomi
+        aniqlangan_sana_raw = instance.aniqlangan_sanasi
+
+        # yil: agar xat_sanasi mavjud bo‘lsa
+        yil = str(instance.xat_sanasi)[:4]
+        aniqlangan_sana = aniqlangan_sana_raw.strftime("%d.%m.%Y") if aniqlangan_sana_raw else ""
+        xat_sanasi_raw = form.cleaned_data.get('xat_sanasi')
+        xat_sanasi = xat_sanasi_raw.strftime("%d.%m.%Y") if xat_sanasi_raw else ""
+
+        fayl_nomi = form.cleaned_data.get('pdf_fayli')
+        json_str = ''
+
+        if fayl_nomi:
+            kengaytma = os.path.splitext(fayl_nomi.name)[1].lower()
+
+            if kengaytma == '.pdf':
+                tekshirish_natijasi = tekshirish(soato4, inn, xat_turi, hisobot_turi, yil, aniqlangan_sana, xat_sanasi, fayl_nomi)
+                json_str = json.dumps(tekshirish_natijasi, indent=4)
+
+            elif kengaytma in ['.jpg', '.jpeg', '.png']:
+                image = Image.open(fayl_nomi)
+                if image.mode in ("RGBA", "P"):
+                    image = image.convert("RGB")
+                buffer = io.BytesIO()
+                image.save(buffer, format="PDF")
+                buffer.seek(0)
+
+                tekshirish_natijasi = tekshirish(soato4, inn, xat_turi, hisobot_turi, yil, aniqlangan_sana, xat_sanasi, buffer)
+                json_str = json.dumps(tekshirish_natijasi, indent=4)
+
+        instance.tekshirish_natijasi = json_str
+        messages.info(self.request, f'{inn} {hisobot_turi} {xat_turi} {aniqlangan_sana}')
+        messages.success(self.request, "PDF fayl muvaffaqiyatli yangilandi.")
+        return super().form_valid(form)
+
+
+
 
 def JarimaQilinmagan(request):
     jarima_qilinmagan = Excelupload.objects.filter(faoliyatsiz=False, xat_turi='chaqiriq').order_by('-aniqlangan_sanasi')
     return render(request, 'ish/jarima_qilinmagan.html', {'ruyxat': jarima_qilinmagan})
+
+
+def parse_pdf(request):
+    if request.method == 'POST' and request.FILES.get('my_file'):
+        uploaded_file = request.FILES['my_file']
+        kengaytma = os.path.splitext(uploaded_file.name)[1]
+
+        if kengaytma.lower() == '.pdf':
+            # Faylni xotiraga yozamiz
+            temp_file = BytesIO()
+            for chunk in uploaded_file.chunks():
+                temp_file.write(chunk)
+            temp_file.seek(0)
+
+            # PDF-ni o‘qish
+            reader = PdfReader(temp_file)
+            pages_count = len(reader.pages)
+
+            split_pdfs = []
+
+            # Har bir sahifa uchun yangi PDF fayl yaratish
+            for i in range(pages_count):
+                writer = PdfWriter()
+                writer.add_page(reader.pages[i])
+                output = BytesIO()
+                writer.write(output)
+                output.seek(0)
+                split_pdfs.append((f'sahifa_{i+1}.pdf', output.read()))
+
+            # ZIP ichida barcha sahifalarni qaytarish (agar kerak bo‘lsa)
+            import zipfile
+            zip_buffer = BytesIO()
+            with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+                for name, data in split_pdfs:
+                    zip_file.writestr(name, data)
+
+            zip_buffer.seek(0)
+            response = HttpResponse(zip_buffer, content_type='application/zip')
+            response['Content-Disposition'] = 'attachment; filename=split_pages.zip'
+            return response
+
+        return render(request, 'ish/parse_pdf.html', {'error': 'Faqat PDF fayl qabul qilinadi.'})
+
+    return render(request, 'ish/parse_pdf.html')
+
 
 def Exceluploadtoexcel(request):
     workbook = openpyxl.Workbook()
@@ -373,3 +507,6 @@ def dalolatnoma_list(request):
             'form': DalolatnomaForm(instance=rec)
         })
     return render(request, 'ish/dalolatnoma_list.html', {'record_forms': record_forms, 'ruyxat': tabl})
+
+
+

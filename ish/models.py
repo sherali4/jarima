@@ -6,7 +6,6 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 
-
 class Xodim(models.Model):
     ism = models.CharField(max_length=100)
     familiya = models.CharField(max_length=100)
@@ -52,7 +51,7 @@ class Excelupload(models.Model):
     xat_turi = models.CharField(max_length=50)
     xat_sanasi = models.DateField(null=True, blank=True)
     kiritgan = models.ForeignKey('ish.CustomUser', on_delete=models.CASCADE, related_name='excel_uploads', null=True, blank=True)
-    aniqlangan_sanasi = models.DateField(auto_now_add=True)
+    aniqlangan_sanasi = models.DateField(auto_now_add=True, blank=True, null=True)
     pdf_fayli = models.FileField(upload_to='jarima_xatlari', null=True, blank=True)
     tasdiqlangan = models.BooleanField(default=False)
     tasdiqlangan_vaqt = models.DateTimeField(null=True, blank=True)  # remove auto_now_add
@@ -60,6 +59,7 @@ class Excelupload(models.Model):
     nazoratdan_chiqarilgan = models.BooleanField(default=False)
     izoh = models.TextField(null=True, blank=True)
     tekshirish_natijasi = models.TextField(null=True, blank=True)
+    sudga_chiqarilgan = models.BooleanField(default=False)
 
 
     def save(self, *args, **kwargs):
@@ -68,6 +68,7 @@ class Excelupload(models.Model):
         elif not self.tasdiqlangan:
             self.tasdiqlangan_vaqt = None
         super().save(*args, **kwargs)
+
 
     def __str__(self):
         return super().__str__()
@@ -113,11 +114,11 @@ class Dalolatnoma(models.Model):
     dalolatnoma_fayli = models.FileField(upload_to='dalolatnomalar/', null=True, blank=True)
     tasdiqlangan = models.BooleanField(default=False)
     tasdiqlangan_vaqti = models.DateTimeField(null=True, blank=True)  # remove auto_now_add
+
     class Meta:
         verbose_name = 'Dalolatnoma'
         verbose_name_plural = 'Dalolatnomalar'
         ordering = ['-yaratilgan_vaqti']
-    
 
     def __str__(self):
         return f"{self.okpo}-{self.inn} ({self.soato4})"

@@ -14,11 +14,16 @@ numpy==2.3.0
 oauthlib==3.2.2
 openpyxl==3.1.5
 pandas==2.3.0
+pdf2image==1.17.0
+pillow==11.2.1
 pycparser==2.22
 PyJWT==2.10.1
+PyMuPDF==1.26.1
+PyPDF2==3.0.1
 python-dateutil==2.9.0.post0
 python3-openid==3.2.0
 pytz==2025.2
+pyzbar==0.1.9
 requests==2.32.4
 requests-oauthlib==2.0.0
 six==1.17.0
